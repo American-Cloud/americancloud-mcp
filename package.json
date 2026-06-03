@@ -5,7 +5,7 @@
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
-    "americancloud-mcp": "./dist/index.js"
+    "americancloud-mcp": "dist/index.js"
   },
   "files": [
     "dist",
