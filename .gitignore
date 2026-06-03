@@ -1,0 +1,9 @@
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
+.env
+
+# Local scratch / probe scripts (write-surface harnesses, introspection) live
+# at the repo root as .mjs and must never enter the (soon-public) history.
+/*.mjs

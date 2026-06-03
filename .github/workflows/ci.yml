@@ -1,0 +1,42 @@
+name: ci
+
+# Runs the schema-honesty + protocol gates on every PR and on pushes to the
+# default branch. IMPORTANT: `npm run build` (tsup/esbuild) does NOT type-check,
+# so the `satisfies`/`extends` asserts that keep the tool schemas honest against
+# the SDK only run under `tsc --noEmit` — which is why `typecheck` is its own
+# step here, not folded into the build.
+#
+# Security note: actions are pinned to major-version tags for readability, to
+# match release.yml. For hardening, repin each to a full commit SHA.
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck (schema-honesty gate — satisfies/extends asserts)
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+
+      - name: Test (coverage + smoke)
+        # Smoke spawns the built dist/index.js over stdio with dummy creds; the
+        # live read-only API calls self-skip when no real credentials are set.
+        run: npm test

@@ -1,0 +1,59 @@
+{
+  "name": "@americancloud/mcp",
+  "version": "0.1.0",
+  "description": "Model Context Protocol server for managing American Cloud infrastructure from Claude, Cursor, and other MCP clients.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "americancloud-mcp": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "CHANGELOG.md",
+    "VERSIONING.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "node --test --import tsx test/*.ts",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "@americancloud/sdk": "1.2.2",
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.17",
+    "tsup": "8.5.1",
+    "tsx": "4.20.3",
+    "typescript": "5.9.3"
+  },
+  "keywords": [
+    "americancloud",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "claude",
+    "cursor",
+    "cloud",
+    "infrastructure"
+  ],
+  "homepage": "https://americancloud.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/American-Cloud/americancloud-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/American-Cloud/americancloud-mcp/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

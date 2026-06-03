@@ -1,0 +1,73 @@
+name: release
+
+# Builds the ESM bin and publishes to npm on a vX.Y.Z tag.
+#
+# Cut a release with: npm version <major|minor|patch> (bumps package.json,
+# commits, and tags), then: git push origin HEAD --follow-tags
+#
+# Publishing uses npm Trusted Publishing (OIDC) — no NPM_TOKEN secret. One-time
+# setup on npmjs.com (package settings → Trusted Publisher): provider GitHub
+# Actions, org American-Cloud, repo americancloud-mcp, workflow
+# release.yml. Requires GitHub-hosted runners, npm CLI >= 11.5.1, Node >= 22.14.
+# Public-repo publishes get automatic provenance attestations. After enabling,
+# set the package to "Require 2FA and disallow tokens".
+#
+# Security note: actions are pinned to major-version tags for readability.
+# For hardening, repin each to a full commit SHA.
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  id-token: write # npm Trusted Publishing (OIDC)
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Upgrade npm for OIDC support
+        # Node 22 bundles npm 10.x; trusted publishing needs npm >= 11.5.1.
+        run: npm install -g npm@11
+
+      - name: Install, typecheck, test & build
+        # Re-run the gates on the release commit so a tag can't publish code that
+        # never passed them. typecheck enforces the schema↔SDK asserts (esbuild
+        # doesn't); build must precede test (smoke spawns dist/index.js). The
+        # live API test self-skips without credentials.
+        run: |
+          npm ci
+          npm run typecheck
+          npm run build
+          npm test
+
+      - name: Publish to npm
+        # No token — npm detects the OIDC environment automatically.
+        # Pre-release tags (contain a hyphen, e.g. v1.2.2-rc.1) publish under
+        # the `next` dist-tag so `npm install @americancloud/mcp` never
+        # resolves an rc. Install rcs explicitly: npm i @americancloud/mcp@next
+        run: |
+          if [[ "${GITHUB_REF_NAME}" == *-* ]]; then
+            npm publish --access public --tag next
+          else
+            npm publish --access public
+          fi
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          args=(--title "${GITHUB_REF_NAME}" --verify-tag --generate-notes)
+          [[ "${GITHUB_REF_NAME}" == *-* ]] && args+=(--prerelease)
+          gh release create "${GITHUB_REF_NAME}" "${args[@]}"
