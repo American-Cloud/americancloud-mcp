@@ -7,8 +7,6 @@ Runs **locally on your machine** over stdio — your API keys never leave your
 environment, and no hosted middleman sits between your AI assistant and your
 cloud.
 
-> **Status:** pre-release. Not yet published to npm.
-
 ## Quick start
 
 Add to your MCP client configuration (Claude Desktop, Claude Code, Cursor, …):
