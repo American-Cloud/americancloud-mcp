@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-06-03
+
 ### Changed
 
 - Normalize the `bin` path in `package.json` (`./dist/index.js` → `dist/index.js`),
