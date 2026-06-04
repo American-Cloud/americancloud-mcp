@@ -46,7 +46,7 @@ npx @americancloud/mcp --services compute,dns
 |---|---|---|
 | `compute` *(default)* | 25 | VMs, packages, images, regions, SSH keys |
 | `storage` *(default)* | 24 | block storage, snapshots, object storage |
-| `networking` *(default)* | 53 | isolated/VPC networks, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
+| `networking` *(default)* | 54 | isolated/VPC networks, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
 | `kubernetes` *(default)* | 11 | managed Kubernetes clusters |
 | `databases` | 35 | managed MySQL/PostgreSQL/Redis, backups, infrastructure, offerings |
 | `wordpress` | 15 | managed WordPress |

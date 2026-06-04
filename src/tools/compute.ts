@@ -73,8 +73,9 @@ const createVmShape = {
     .describe('Image label, e.g. "ubuntu-24.04-050826" (from list_images).'),
   network: z
     .string()
+    .optional()
     .describe(
-      "UUID of an existing network to attach the VM to (from networking list tools).",
+      "UUID of an existing network to attach the VM to (from networking list tools). Omit to have an isolated network created for the VM automatically.",
     ),
   subscriptionPeriod: z
     .enum(["hourly", "monthly"])
@@ -142,13 +143,14 @@ void _checkPowerVm;
 
 const scaleVmShape = {
   id: vmId,
-  cpu: z.number().optional().describe("New vCPU count. Omit to keep current."),
+  cpu: z.number().int().min(1).optional().describe("New vCPU count. Omit to keep current."),
   memoryMb: z
     .number()
     .int()
+    .min(1)
     .optional()
     .describe("New memory in megabytes. Omit to keep current."),
-} satisfies Record<keyof AmericancloudApi.ScaleVmsRequest, z.ZodTypeAny>;
+} satisfies Record<keyof AmericancloudApi.ScaleVmDto, z.ZodTypeAny>;
 
 const resizeVmDiskShape = {
   id: vmId,

@@ -306,7 +306,7 @@ export const storageTools: ToolDef[] = [
     name: "list_object_storage_units",
     title: "List object storage units",
     description:
-      "List your S3-compatible object storage units, optionally with usage figures. A unit contains buckets and has its own access keys.",
+      "List your S3-compatible object storage units, optionally with usage figures. A unit contains buckets and has its own access keys. A null maxBuckets or limitKb means unlimited.",
     group: "storage",
     sdkRef: "objectStorage.listUnitsObjectStorage",
     readOnly: true,
@@ -318,7 +318,7 @@ export const storageTools: ToolDef[] = [
     name: "create_object_storage_unit",
     title: "Create object storage unit",
     description:
-      "Create an S3-compatible object storage unit. Buckets and access keys live inside it. Object storage is metered by usage.",
+      "Create an S3-compatible object storage unit and return it. The returned storageUnitId is the identifier every other object storage tool takes. Buckets and access keys live inside the unit; object storage is metered by usage.",
     group: "storage",
     sdkRef: "objectStorage.createUnitObjectStorage",
     readOnly: false,

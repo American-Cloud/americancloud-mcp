@@ -1,7 +1,8 @@
 /**
  * Networking group: isolatedNetworks, vpcNetworks, publicIps, firewallRules,
  * portForwarding, loadBalancerRules, egressRules, networkAcls.
- * CloudStack-style ports are strings.
+ * Port-forwarding and load-balancer ports are strings (CloudStack-style);
+ * firewall/egress/ACL rule ports are integers (1-65535).
  */
 import { z } from "zod";
 import type { AmericancloudApi, AmericancloudApiClient } from "@americancloud/sdk";
@@ -69,6 +70,24 @@ const createVpcTierShape = {
   netmask: z.string().describe('Tier netmask, e.g. "255.255.255.0".'),
   aclId: z.string().optional().describe("Network ACL list ID to apply to the tier (from list_network_acl_lists)."),
 } satisfies Record<keyof AmericancloudApi.CreateVpcTierDto, z.ZodTypeAny>;
+const deleteVpcTierShape = {
+  id: z.string().describe("VPC identifier (UUID) that contains the tier."),
+  tierId: z.string().describe("Tier (subnet) identifier (UUID) to delete, from get_vpc_network."),
+} satisfies Record<keyof AmericancloudApi.DeleteTierVpcNetworksRequest, z.ZodTypeAny>;
+const getVpcTierShape = {
+  id: z.string().describe("VPC identifier (UUID) that contains the tier."),
+  tierId: z.string().describe("Tier (subnet) identifier (UUID), from get_vpc_network."),
+} satisfies Record<keyof AmericancloudApi.GetTierVpcNetworksRequest, z.ZodTypeAny>;
+const updateVpcTierShape = {
+  id: z.string().describe("VPC identifier (UUID) that contains the tier."),
+  tierId: z.string().describe("Tier (subnet) identifier (UUID) to update, from get_vpc_network."),
+  name: z.string().optional().describe("New name."),
+  description: z.string().optional().describe("New description."),
+} satisfies Record<keyof AmericancloudApi.UpdateVpcTierDto, z.ZodTypeAny>;
+const restartVpcTierShape = {
+  id: z.string().describe("VPC identifier (UUID) that contains the tier."),
+  tierId: z.string().describe("Tier (subnet) identifier (UUID) to restart, from get_vpc_network."),
+} satisfies Record<keyof AmericancloudApi.RestartTierVpcNetworksRequest, z.ZodTypeAny>;
 const restartVpcNetworkShape = {
   id: z.string().describe("VPC identifier (UUID) to restart."),
 } satisfies Record<keyof AmericancloudApi.RestartVpcNetworksRequest, z.ZodTypeAny>;
@@ -116,8 +135,8 @@ const listFirewallRulesShape = {
 const createFirewallRuleShape = {
   ipId: z.string().describe("Public IP identifier (UUID) to attach the rule to."),
   protocol: z.enum(["TCP", "UDP", "ICMP", "ALL"]).describe("Protocol the rule applies to."),
-  startPort: z.string().optional().describe("Start of the port range (string). Omit for ICMP/ALL."),
-  endPort: z.string().optional().describe("End of the port range (string). Omit for ICMP/ALL."),
+  startPort: z.number().int().min(1).max(65535).optional().describe("Start of the port range (1-65535). Omit for ICMP/ALL."),
+  endPort: z.number().int().min(1).max(65535).optional().describe("End of the port range (1-65535). Omit for ICMP/ALL."),
   sourceCidrList: z.string().describe('Allowed source CIDR(s), e.g. "0.0.0.0/0" for anywhere.'),
   type: z.enum(["Ingress", "Egress"]).optional().describe("Rule direction. Defaults to Ingress."),
 } satisfies Record<keyof CreateFirewallRuleDto, z.ZodTypeAny>;
@@ -201,8 +220,8 @@ const listEgressRulesShape = {
 } satisfies Record<keyof AmericancloudApi.ListEgressRulesRequest, z.ZodTypeAny>;
 const createEgressRuleShape = {
   protocol: z.string().describe('Protocol, e.g. "TCP", "UDP", "ICMP", or "ALL".'),
-  startPort: z.string().optional().describe("Start port (string)."),
-  endPort: z.string().optional().describe("End port (string)."),
+  startPort: z.number().int().min(1).max(65535).optional().describe("Start port (1-65535)."),
+  endPort: z.number().int().min(1).max(65535).optional().describe("End port (1-65535)."),
   sourceCidrList: z.string().optional().describe("Source CIDR(s) within the network."),
   destCidrList: z.string().optional().describe("Destination CIDR(s)."),
   networkId: z.string().optional().describe("Isolated network UUID the rule applies to."),
@@ -218,8 +237,8 @@ const updateEgressRuleShape = {
   id: z.string().describe("Egress rule identifier (UUID)."),
   sourceCidrList: z.string().optional().describe("New source CIDR(s)."),
   destCidrList: z.string().optional().describe("New destination CIDR(s)."),
-  startPort: z.string().optional().describe("New start port."),
-  endPort: z.string().optional().describe("New end port."),
+  startPort: z.number().int().min(1).max(65535).optional().describe("New start port (1-65535)."),
+  endPort: z.number().int().min(1).max(65535).optional().describe("New end port (1-65535)."),
 } satisfies Record<keyof AmericancloudApi.UpdateEgressRuleDto, z.ZodTypeAny>;
 const deleteEgressRuleShape = {
   id: z.string().describe("Egress rule identifier (UUID) to delete."),
@@ -255,8 +274,8 @@ const createNetworkAclRuleShape = {
   action: z.string().describe('Action: "Allow" or "Deny".'),
   trafficType: z.string().describe('Traffic direction: "Ingress" or "Egress".'),
   number: z.string().optional().describe("Rule number / ordering (string)."),
-  startPort: z.string().optional().describe("Start port (string)."),
-  endPort: z.string().optional().describe("End port (string)."),
+  startPort: z.number().int().min(1).max(65535).optional().describe("Start port (1-65535)."),
+  endPort: z.number().int().min(1).max(65535).optional().describe("End port (1-65535)."),
   icmpType: z.string().optional().describe("ICMP type (when protocol is ICMP)."),
   icmpCode: z.string().optional().describe("ICMP code (when protocol is ICMP)."),
 } satisfies Record<keyof AmericancloudApi.CreateNetworkAclRuleDto, z.ZodTypeAny>;
@@ -273,9 +292,9 @@ const replaceNetworkAclListShape = {
 
 export const networkingTools: ToolDef[] = [
   // ── isolatedNetworks ──
-  defineTool({ name: "list_isolated_networks", title: "List isolated networks", description: "List isolated (single-tier private) networks in your account.", group: "networking", sdkRef: "isolatedNetworks.listIsolatedNetworks", readOnly: true, idempotent: true, inputSchema: listIsolatedNetworksShape, run: (c, a) => c.isolatedNetworks.listIsolatedNetworks(a) }),
+  defineTool({ name: "list_isolated_networks", title: "List isolated networks", description: "List standalone isolated (single-tier private) networks in your account. VPC tier subnets are listed separately via get_vpc_network.", group: "networking", sdkRef: "isolatedNetworks.listIsolatedNetworks", readOnly: true, idempotent: true, inputSchema: listIsolatedNetworksShape, run: (c, a) => c.isolatedNetworks.listIsolatedNetworks(a) }),
   defineTool({ name: "create_isolated_network", title: "Create isolated network", description: "Create an isolated private network in a region. VMs and public IPs can be attached to it.", group: "networking", sdkRef: "isolatedNetworks.createIsolatedNetworks", readOnly: false, idempotent: false, inputSchema: createIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.createIsolatedNetworks(a) }),
-  defineTool({ name: "get_isolated_network", title: "Get isolated network", description: "Get one isolated network by ID, including its CIDR and status.", group: "networking", sdkRef: "isolatedNetworks.getIsolatedNetworks", readOnly: true, idempotent: true, inputSchema: getIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.getIsolatedNetworks(a) }),
+  defineTool({ name: "get_isolated_network", title: "Get isolated network", description: "Get one standalone isolated network by ID, including its CIDR and status. If the ID belongs to a VPC tier subnet (e.g. from a VM in a VPC), use get_vpc_tier instead.", group: "networking", sdkRef: "isolatedNetworks.getIsolatedNetworks", readOnly: true, idempotent: true, inputSchema: getIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.getIsolatedNetworks(a) }),
   defineTool({ name: "update_isolated_network", title: "Update isolated network", description: "Update an isolated network's name or description.", group: "networking", sdkRef: "isolatedNetworks.updateIsolatedNetworks", readOnly: false, idempotent: true, inputSchema: updateIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.updateIsolatedNetworks(a) }),
   defineTool({ name: "delete_isolated_network", title: "Delete isolated network", description: "Permanently delete an isolated network. Detach any VMs and release its public IPs first. Cannot be undone.", group: "networking", sdkRef: "isolatedNetworks.deleteIsolatedNetworks", readOnly: false, destructive: true, idempotent: true, inputSchema: deleteIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.deleteIsolatedNetworks(a) }),
   defineTool({ name: "restart_isolated_network", title: "Restart isolated network", description: "Restart an isolated network's virtual router. Briefly disrupts connectivity; reversible.", group: "networking", sdkRef: "isolatedNetworks.restartIsolatedNetworks", readOnly: false, idempotent: false, inputSchema: restartIsolatedNetworkShape, run: (c, a) => c.isolatedNetworks.restartIsolatedNetworks(a) }),
@@ -288,6 +307,10 @@ export const networkingTools: ToolDef[] = [
   defineTool({ name: "delete_vpc_network", title: "Delete VPC network", description: "Permanently delete a VPC network and its tiers. Cannot be undone.", group: "networking", sdkRef: "vpcNetworks.deleteVpcNetworks", readOnly: false, destructive: true, idempotent: true, inputSchema: deleteVpcNetworkShape, run: (c, a) => c.vpcNetworks.deleteVpcNetworks(a) }),
   defineTool({ name: "get_cost_estimate_vpc_network", title: "Get VPC cost estimate", description: "Preview the price of a VPC configuration without creating it. Same arguments as create_vpc_network.", group: "networking", sdkRef: "vpcNetworks.getCostEstimateVpcNetworks", readOnly: true, idempotent: true, inputSchema: createVpcNetworkShape, run: (c, a) => c.vpcNetworks.getCostEstimateVpcNetworks(a) }),
   defineTool({ name: "create_vpc_tier", title: "Create VPC tier", description: "Create a tier (subnet) inside a VPC, optionally with a network ACL list applied.", group: "networking", sdkRef: "vpcNetworks.createTierVpcNetworks", readOnly: false, idempotent: false, inputSchema: createVpcTierShape, run: (c, a) => c.vpcNetworks.createTierVpcNetworks(a) }),
+  defineTool({ name: "get_vpc_tier", title: "Get VPC tier", description: "Get one tier (subnet) of a VPC, including its CIDR, gateway, ACL, status, and creation date. Use the tier IDs from get_vpc_network.", group: "networking", sdkRef: "vpcNetworks.getTierVpcNetworks", readOnly: true, idempotent: true, inputSchema: getVpcTierShape, run: (c, a) => c.vpcNetworks.getTierVpcNetworks(a) }),
+  defineTool({ name: "update_vpc_tier", title: "Update VPC tier", description: "Update a VPC tier's name or description. To change its ACL, use replace_network_acl_list instead.", group: "networking", sdkRef: "vpcNetworks.updateTierVpcNetworks", readOnly: false, idempotent: true, inputSchema: updateVpcTierShape, run: (c, a) => c.vpcNetworks.updateTierVpcNetworks(a) }),
+  defineTool({ name: "restart_vpc_tier", title: "Restart VPC tier", description: "Restart a single tier (subnet) of a VPC. Briefly disrupts connectivity on that tier; reversible.", group: "networking", sdkRef: "vpcNetworks.restartTierVpcNetworks", readOnly: false, idempotent: false, inputSchema: restartVpcTierShape, run: (c, a) => c.vpcNetworks.restartTierVpcNetworks(a) }),
+  defineTool({ name: "delete_vpc_tier", title: "Delete VPC tier", description: "Delete a single tier (subnet) from a VPC, leaving the VPC and its other tiers in place. Cannot be undone. Use the tier IDs from get_vpc_network.", group: "networking", sdkRef: "vpcNetworks.deleteTierVpcNetworks", readOnly: false, destructive: true, idempotent: true, inputSchema: deleteVpcTierShape, run: (c, a) => c.vpcNetworks.deleteTierVpcNetworks(a) }),
   defineTool({ name: "restart_vpc_network", title: "Restart VPC network", description: "Restart a VPC's virtual router. Briefly disrupts connectivity; reversible.", group: "networking", sdkRef: "vpcNetworks.restartVpcNetworks", readOnly: false, idempotent: false, inputSchema: restartVpcNetworkShape, run: (c, a) => c.vpcNetworks.restartVpcNetworks(a) }),
 
   // ── publicIps ──
