@@ -10,7 +10,7 @@ pins one `@americancloud/sdk` version in `package.json`, and SDK versions are
 lockstep with the API platform version — so the pin transitively states exactly
 which API surface this server was built and tested against:
 
-> `@americancloud/mcp 0.2.x` ↔ `@americancloud/sdk 1.3.0` ↔ API platform `1.3.0` (API `v1`)
+> `@americancloud/mcp 0.2.1+` ↔ `@americancloud/sdk 1.3.1` ↔ API platform `1.3.1` (API `v1`)
 
 Rules:
 

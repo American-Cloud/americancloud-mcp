@@ -8,6 +8,18 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-06-05
+
+### Changed
+
+- SDK pin bumped to `@americancloud/sdk` 1.3.1 (API 1.3.1): isolated-network
+  and snapshot deletes now surface typed transient errors — `409` while
+  attached resources are still releasing, `504` while deletion is in
+  progress. Both are retryable.
+- `delete_isolated_network` and `delete_snapshot` descriptions now tell the
+  agent to retry those transient failures until the delete succeeds or the
+  resource is gone.
+
 ## [0.2.0] - 2026-06-04
 
 ### Added

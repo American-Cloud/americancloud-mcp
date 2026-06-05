@@ -266,7 +266,7 @@ export const storageTools: ToolDef[] = [
   defineTool({
     name: "delete_snapshot",
     title: "Delete snapshot",
-    description: "Permanently delete a snapshot. The source volume is unaffected. Cannot be undone.",
+    description: "Permanently delete a snapshot. The source volume is unaffected. If the volume is mid-modification or the deletion is still settling, the call can transiently fail with a conflict (409) or gateway timeout (504) — retry until it succeeds or the snapshot is no longer found. Cannot be undone.",
     group: "storage",
     sdkRef: "snapshots.deleteSnapshots",
     readOnly: false,
