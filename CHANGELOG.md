@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-06-04
+
 ### Added
 
 - `delete_vpc_tier` — delete a single tier (subnet) from a VPC, leaving the
