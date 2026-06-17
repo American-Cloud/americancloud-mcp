@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.3.0-rc.1] - 2026-06-17
+
 ### Added
 
 - `update_database_backup_config` — enable or disable encryption of a managed
