@@ -125,6 +125,20 @@ void _ckTrig;
 const getDatabaseBackupConfigShape = {
   clusterId,
 } satisfies Record<keyof AmericancloudApi.GetConfigDatabaseBackupsRequest, z.ZodTypeAny>;
+const updateDatabaseBackupConfigShape = {
+  clusterId,
+  encryptionEnabled: z
+    .boolean()
+    .describe(
+      "Whether backups for this cluster should be encrypted at rest. When enabled, backups are encrypted with AES-256-CFB.",
+    ),
+  passphrase: z
+    .string()
+    .optional()
+    .describe(
+      "Passphrase used to encrypt backups. Required when enabling encryption. 12–256 printable ASCII characters (letters, digits, symbols), no spaces. Store it securely — it is required to restore encrypted backups and cannot be recovered if lost.",
+    ),
+} satisfies Record<keyof AmericancloudApi.UpdateBackupConfigRequestDto, z.ZodTypeAny>;
 const getDatabaseBackupScheduleShape = {
   clusterId,
   schedule_name: z.string().optional().describe("Filter to a specific schedule name."),
@@ -248,6 +262,7 @@ export const databasesTools: ToolDef[] = [
   defineTool({ name: "list_database_backups", title: "List database backups", description: "List the backups for a managed database cluster.", group: "databases", sdkRef: "databaseBackups.listDatabaseBackups", readOnly: true, idempotent: true, inputSchema: listDatabaseBackupsShape, run: (c, a) => c.databaseBackups.listDatabaseBackups(a) }),
   defineTool({ name: "trigger_database_backup", title: "Trigger database backup", description: "Trigger an on-demand backup of a managed database cluster with the given method and retention.", group: "databases", sdkRef: "databaseBackups.triggerDatabaseBackups", readOnly: false, idempotent: false, inputSchema: triggerDatabaseBackupShape, run: (c, a) => c.databaseBackups.triggerDatabaseBackups(a) }),
   defineTool({ name: "get_database_backup_config", title: "Get database backup config", description: "Get the backup configuration for a managed database cluster.", group: "databases", sdkRef: "databaseBackups.getConfigDatabaseBackups", readOnly: true, idempotent: true, inputSchema: getDatabaseBackupConfigShape, run: (c, a) => c.databaseBackups.getConfigDatabaseBackups(a) }),
+  defineTool({ name: "update_database_backup_config", title: "Update database backup config", description: "Enable or disable encryption of a managed database cluster's backups. When enabling, provide a passphrase (12–256 printable ASCII characters, no spaces) and store it securely — it is required to restore the encrypted backups and cannot be recovered if lost. Check the current state with get_database_backup_config.", group: "databases", sdkRef: "databaseBackups.updateConfigDatabaseBackups", readOnly: false, idempotent: true, inputSchema: updateDatabaseBackupConfigShape, run: (c, a) => c.databaseBackups.updateConfigDatabaseBackups(a) }),
   defineTool({ name: "get_database_backup_schedule", title: "Get database backup schedule", description: "Get the backup schedule(s) for a managed database cluster.", group: "databases", sdkRef: "databaseBackups.getScheduleDatabaseBackups", readOnly: true, idempotent: true, inputSchema: getDatabaseBackupScheduleShape, run: (c, a) => c.databaseBackups.getScheduleDatabaseBackups(a) }),
   defineTool({ name: "create_database_backup_schedule", title: "Create database backup schedule", description: "Create a backup schedule (one or more cron entries) for a managed database cluster.", group: "databases", sdkRef: "databaseBackups.createScheduleDatabaseBackups", readOnly: false, idempotent: false, inputSchema: createDatabaseBackupScheduleShape, run: (c, { clusterId, ...body }) => c.databaseBackups.createScheduleDatabaseBackups({ clusterId, body }) }),
   defineTool({ name: "update_database_backup_schedule", title: "Update database backup schedule", description: "Replace the backup schedule for a managed database cluster.", group: "databases", sdkRef: "databaseBackups.updateScheduleDatabaseBackups", readOnly: false, idempotent: true, inputSchema: updateDatabaseBackupScheduleShape, run: (c, { clusterId, ...body }) => c.databaseBackups.updateScheduleDatabaseBackups({ clusterId, body }) }),

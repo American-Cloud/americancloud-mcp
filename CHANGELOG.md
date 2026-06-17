@@ -8,6 +8,16 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+### Added
+
+- `update_database_backup_config` — enable or disable encryption of a managed
+  database cluster's backups with a passphrase (12–256 printable ASCII
+  characters; AES-256-CFB). Pairs with the existing `get_database_backup_config`.
+
+### Changed
+
+- SDK pin bumped to `@americancloud/sdk` 1.3.2 (API 1.3.2).
+
 ## [0.2.1] - 2026-06-05
 
 ### Changed
