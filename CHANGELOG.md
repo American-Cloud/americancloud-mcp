@@ -8,7 +8,7 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
-## [0.3.0-rc.1] - 2026-06-17
+## [0.3.0] - 2026-06-17
 
 ### Added
 
