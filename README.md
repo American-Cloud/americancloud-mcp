@@ -7,6 +7,8 @@ Runs **locally on your machine** over stdio — your API keys never leave your
 environment, and no hosted middleman sits between your AI assistant and your
 cloud.
 
+![Claude Code auditing American Cloud infrastructure over the MCP server with a read-only key](https://raw.githubusercontent.com/American-Cloud/americancloud-mcp/master/.demo/mcp-audit.gif)
+
 ## Quick start
 
 Add to your MCP client configuration (Claude Desktop, Claude Code, Cursor, …):
@@ -46,9 +48,9 @@ npx @americancloud/mcp --services compute,dns
 |---|---|---|
 | `compute` *(default)* | 25 | VMs, packages, images, regions, SSH keys |
 | `storage` *(default)* | 24 | block storage, snapshots, object storage |
-| `networking` *(default)* | 54 | isolated/VPC networks, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
+| `networking` *(default)* | 57 | isolated/VPC networks, VPC tiers, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
 | `kubernetes` *(default)* | 11 | managed Kubernetes clusters |
-| `databases` | 35 | managed MySQL/PostgreSQL/Redis, backups, infrastructure, offerings |
+| `databases` | 36 | managed MySQL/PostgreSQL/Redis, backups, infrastructure, offerings |
 | `wordpress` | 15 | managed WordPress |
 | `dns` | 7 | hosted DNS zones and records |
 
@@ -77,6 +79,11 @@ billing**. It's designed to be safe by default:
 "args": ["-y", "@americancloud/mcp", "--allow-writes"]
 ```
 
+With writes enabled, the assistant can provision and deploy — and it still shows
+you the cost and waits for approval before creating anything:
+
+![Claude Code provisioning a server and deploying to it over the MCP server with --allow-writes — cost shown first, writes run through you](https://raw.githubusercontent.com/American-Cloud/americancloud-mcp/master/.demo/mcp-provision.gif)
+
 ## Environment
 
 | Variable | Required | Purpose |
@@ -84,6 +91,15 @@ billing**. It's designed to be safe by default:
 | `AMERICANCLOUD_API_CLIENT_ID` | yes | API client ID (`X-API-Client-ID`) |
 | `AMERICANCLOUD_API_CLIENT_SECRET` | yes | API client secret (`X-API-Client-Secret`) |
 | `AMERICANCLOUD_API_URL` | no | API base URL override |
+
+## Guides
+
+Full documentation on the American Cloud docs site:
+
+- [MCP server overview](https://americancloud.com/docs/mcp/overview) — setup, safety, and service groups
+- Client setup: [Claude Code](https://americancloud.com/docs/mcp/claude-code) · [Claude Desktop](https://americancloud.com/docs/mcp/claude-desktop) · [Cursor](https://americancloud.com/docs/mcp/cursor) · [other clients](https://americancloud.com/docs/mcp/other-clients)
+- [Things to try](https://americancloud.com/docs/mcp/use-cases) — prompt ideas across compute, storage, networking, and DNS
+- [Deploy with AI](https://americancloud.com/docs/deploy-with-ai/overview) — migration playbooks and deployment recipes built on this server
 
 ## Versioning
 
