@@ -8,6 +8,22 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-27
+
+### Added
+
+- `create_port_forwarding_rule` gains an optional `tierId` — targets a specific
+  VPC tier when the public IP is reserved in a VPC and the VM has interfaces in
+  more than one tier of that VPC. Otherwise the tier is inferred from the VM;
+  ignored for IPs in an isolated network.
+
+### Changed
+
+- `delete_vm` and `create_vm` descriptions now note that a network auto-created
+  for a VM is removed with it once its last VM is deleted (and its public IPs
+  released); networks you supply explicitly are left untouched.
+- SDK pin bumped to `@americancloud/sdk` 1.3.3 (API 1.3.3).
+
 ## [0.3.0] - 2026-06-17
 
 ### Added

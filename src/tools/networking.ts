@@ -159,6 +159,12 @@ const createPortForwardingRuleShape = {
   protocol: z.enum(["TCP", "UDP"]).describe("Protocol."),
   vmId: z.string().describe("VM UUID to forward traffic to (from list_vms)."),
   openFirewall: z.string().optional().describe('Whether to open the firewall too ("true"/"false").'),
+  tierId: z
+    .string()
+    .optional()
+    .describe(
+      "For a public IP reserved in a VPC, the VPC tier (UUID, from get_vpc_network) the rule applies to. Only needed when the VM has interfaces in more than one tier of the VPC — otherwise it is inferred from the VM. Ignored for IPs in an isolated network.",
+    ),
 } satisfies Record<keyof CreatePortForwardingRuleDto, z.ZodTypeAny>;
 type _CkPf = z.infer<z.ZodObject<typeof createPortForwardingRuleShape>> extends CreatePortForwardingRuleDto ? true : never;
 const _ckPf: _CkPf = true;

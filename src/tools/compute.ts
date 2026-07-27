@@ -75,7 +75,7 @@ const createVmShape = {
     .string()
     .optional()
     .describe(
-      "UUID of an existing network to attach the VM to (from networking list tools). Omit to have an isolated network created for the VM automatically.",
+      "UUID of an existing network to attach the VM to (from networking list tools). Omit to have an isolated network created for the VM automatically. An auto-created network is removed with the VM once its last VM is deleted; a network you supply is left untouched.",
     ),
   subscriptionPeriod: z
     .enum(["hourly", "monthly"])
@@ -288,7 +288,7 @@ export const computeTools: ToolDef[] = [
     name: "delete_vm",
     title: "Delete VM",
     description:
-      "Permanently destroy a virtual machine and its root disk. All data on the VM is lost and billing stops. Cannot be undone.",
+      "Permanently destroy a virtual machine and its root disk. All data on the VM is lost and billing stops. If the VM's network was auto-created and no other VMs remain on it, that network is also removed and its public IPs released; networks you created explicitly are left untouched. Cannot be undone.",
     group: "compute",
     sdkRef: "vms.deleteVms",
     readOnly: false,
