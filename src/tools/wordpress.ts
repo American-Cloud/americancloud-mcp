@@ -10,9 +10,11 @@ import { pagination } from "../schemas.js";
 const createWordpressShape = {
   packageLabel: z.string().describe("WordPress package label (from list_wordpress_packages)."),
   domain: z
-    .record(z.unknown())
+    .string()
     .optional()
-    .describe("Optional domain configuration object for the site."),
+    .describe(
+      "Optional custom domain for the site, e.g. \"example.com\". Point it at the nameservers from get_wordpress_nameservers.",
+    ),
 } satisfies Record<keyof AmericancloudApi.CreateWordPressDto, z.ZodTypeAny>;
 
 type _CheckCreateWp =
@@ -52,7 +54,7 @@ export const wordpressTools: ToolDef[] = [
     name: "create_wordpress",
     title: "Create WordPress site",
     description:
-      "Provision a managed WordPress site on the chosen package. Preview cost first with get_cost_estimate_wordpress.",
+      "Provision a managed WordPress site on the chosen package. The call returns as soon as the request is accepted, with the new site's id and a status of provisioning — poll get_wordpress until it reports active, or failed with a reason. Preview cost first with get_cost_estimate_wordpress.",
     group: "wordpress",
     sdkRef: "wordpress.createWordpress",
     readOnly: false,
@@ -167,13 +169,25 @@ export const wordpressTools: ToolDef[] = [
     name: "change_wordpress_package",
     title: "Change WordPress package",
     description:
-      "Change the managed WordPress site to a different package. Use list_wordpress_upgrade_packages for valid targets.",
+      "Change the managed WordPress site to a different package. Use list_wordpress_upgrade_packages for valid targets, and preview the charge with get_wordpress_change_package_estimate.",
     group: "wordpress",
     sdkRef: "wordpress.changePackageWordpress",
     readOnly: false,
     idempotent: true,
     inputSchema: changeWordpressPackageShape,
     run: (client, args) => client.wordpress.changePackageWordpress(args),
+  }),
+  defineTool({
+    name: "get_wordpress_change_package_estimate",
+    title: "Get WordPress package change estimate",
+    description:
+      "Preview what it costs to move the managed WordPress site to another package. Returns the prorated charge for the rest of the current billing period, the difference in monthly rate, any account discount, and the period the charge covers. It changes nothing and charges nothing; use list_wordpress_upgrade_packages for valid targets.",
+    group: "wordpress",
+    sdkRef: "wordpress.getChangePackageEstimateWordpress",
+    readOnly: true,
+    idempotent: true,
+    inputSchema: changeWordpressPackageShape,
+    run: (client, args) => client.wordpress.getChangePackageEstimateWordpress(args),
   }),
   defineTool({
     name: "list_wordpress_packages",

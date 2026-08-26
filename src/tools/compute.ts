@@ -288,7 +288,7 @@ export const computeTools: ToolDef[] = [
     name: "delete_vm",
     title: "Delete VM",
     description:
-      "Permanently destroy a virtual machine and its root disk. All data on the VM is lost and billing stops. If the VM's network was auto-created and no other VMs remain on it, that network is also removed and its public IPs released; networks you created explicitly are left untouched. Cannot be undone.",
+      "Permanently destroy a virtual machine and its root disk. All data on the VM is lost and billing stops. If the VM's network was auto-created and no other VMs remain on it, that network is also removed and its public IPs released; networks you created explicitly are left untouched. The delete is refused while the root disk still has snapshots — the error names them, so delete those with delete_snapshot and try again. Cannot be undone.",
     group: "compute",
     sdkRef: "vms.deleteVms",
     readOnly: false,

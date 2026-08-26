@@ -138,19 +138,44 @@ function registerOne(server: McpServer, client: AmericancloudApiClient, tool: To
  * Map any error to an MCP tool error result. A tool failure must NEVER crash
  * the server — the agent gets a readable error and can adjust.
  */
-function toErrorResult(toolName: string, err: unknown): CallToolResult {
+export function toErrorResult(toolName: string, err: unknown): CallToolResult {
   if (err instanceof AmericancloudApiError) {
-    const body = err.body as { statusCode?: number; message?: string | string[] } | undefined;
+    const body = err.body as
+      | {
+          statusCode?: number;
+          message?: string | string[];
+          code?: string;
+          snapshots?: { id?: string; name?: string }[];
+        }
+      | undefined;
     const status = err.statusCode ?? body?.statusCode;
     const msg = Array.isArray(body?.message)
       ? body.message.join("; ")
       : (body?.message ?? err.message);
+    // `code` is the machine-readable reason. Give it to the agent, because it
+    // separates causes that share a status: a 409 that means "still being set
+    // up, retry" from one that means "being deleted, stop". The message text
+    // can be reworded at any time, so it is the wrong thing to branch on.
+    const code = typeof body?.code === "string" && body.code ? ` [${body.code}]` : "";
+    // A delete refused because snapshots exist names them. Passing them through
+    // saves the agent a second call to work out what to remove. Every field
+    // here arrives over the network, and this function runs inside the tool's
+    // catch block, so it must not throw on a shape it did not expect.
+    const blocking = (Array.isArray(body?.snapshots) ? body.snapshots : [])
+      .map((s) => {
+        const name = typeof s?.name === "string" ? s.name.trim() : "";
+        const id = typeof s?.id === "string" ? s.id.trim() : "";
+        if (name && id) return `${name} (${id})`;
+        return id || name;
+      })
+      .filter((entry) => entry.length > 0);
+    const suffix = blocking.length ? ` Blocking snapshots: ${blocking.join(", ")}.` : "";
     return {
       isError: true,
       content: [
         {
           type: "text",
-          text: `American Cloud API error${status ? ` (${status})` : ""}: ${msg}`,
+          text: `American Cloud API error${status ? ` (${status})` : ""}${code}: ${msg}${suffix}`,
         },
       ],
     };

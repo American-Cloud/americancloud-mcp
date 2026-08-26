@@ -8,6 +8,47 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-08-26
+
+### Added
+
+- `get_wordpress_change_package_estimate` — preview what it costs to move the
+  managed WordPress site to another package before you commit to it. It returns
+  the prorated charge for the rest of the current billing period, the difference
+  in monthly rate, any account discount, and the period the charge covers. It
+  changes nothing and charges nothing.
+- Tool errors now carry the API's machine-readable reason code, for example
+  `American Cloud API error (409) [provisioning_in_progress]: ...`. Branch on
+  that code rather than on the message, which can be reworded at any time. It
+  tells apart causes that share a status: a 409 that means "still being set up,
+  retry" from one that means "being deleted, stop".
+- A delete refused because the disk still has snapshots now names them in the
+  error, with each snapshot's name and id, so you can remove them with
+  `delete_snapshot` and retry without a second lookup.
+
+### Fixed
+
+- `create_wordpress` and `get_cost_estimate_wordpress` take `domain` as a
+  string, for example `"example.com"`. It was modelled as an object, which no
+  caller could satisfy, so a custom domain could not be sent.
+- `create_block_storage_volume` states the real minimum size. `sizeGb` accepted
+  1 while the platform refuses anything under 5, so the smallest volumes failed
+  with a 400 instead of being caught before the call.
+
+### Changed
+
+- SDK pin bumped to `@americancloud/sdk` 1.4.0 (API 1.4.0).
+- `change_wordpress_package` points at the new estimate tool.
+- `create_wordpress` states that the call returns as soon as the request is
+  accepted, and that you poll `get_wordpress` until the site reports `active`
+  or `failed`.
+- `delete_vm` and `delete_block_storage_volume` state that the delete is
+  refused while the disk still has snapshots.
+- `trigger_database_backup` states that a backup needs the cluster's
+  infrastructure running, and that you retry once it is.
+- `delete_database_backup_repo` states that a repository still in use is
+  refused, and points at `set_active_database_backup_repo`.
+
 ## [0.4.0] - 2026-07-27
 
 ### Added

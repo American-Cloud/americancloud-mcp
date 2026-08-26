@@ -51,7 +51,7 @@ npx @americancloud/mcp --services compute,dns
 | `networking` *(default)* | 57 | isolated/VPC networks, VPC tiers, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
 | `kubernetes` *(default)* | 11 | managed Kubernetes clusters |
 | `databases` | 36 | managed MySQL/PostgreSQL/Redis, backups, infrastructure, offerings |
-| `wordpress` | 15 | managed WordPress |
+| `wordpress` | 16 | managed WordPress |
 | `dns` | 7 | hosted DNS zones and records |
 
 Scoping with `--services` keeps the tool list small for context-sensitive

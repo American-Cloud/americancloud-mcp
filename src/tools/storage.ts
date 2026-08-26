@@ -17,7 +17,7 @@ const listBlockStorageShape = {
 
 const createBlockStorageShape = {
   name: z.string().min(1).describe("Volume name."),
-  sizeGb: z.number().int().min(1).describe("Volume size in gigabytes."),
+  sizeGb: z.number().int().min(5).describe("Volume size in gigabytes. The smallest volume is 5 GB."),
   region: z.string().describe('Region label, e.g. "us-west-0" (from list_regions).'),
 } satisfies Record<keyof AmericancloudApi.CreateVolumeDto, z.ZodTypeAny>;
 
@@ -162,7 +162,7 @@ export const storageTools: ToolDef[] = [
     name: "delete_block_storage_volume",
     title: "Delete block storage volume",
     description:
-      "Permanently delete a block storage volume and all data on it. Detach it from any VM first. Cannot be undone.",
+      "Permanently delete a block storage volume and all data on it. Detach it from any VM first. The delete is refused while the volume still has snapshots — the error names them, so delete those with delete_snapshot and try again. Cannot be undone.",
     group: "storage",
     sdkRef: "blockStorage.deleteBlockStorage",
     readOnly: false,
