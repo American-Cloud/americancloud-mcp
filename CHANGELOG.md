@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-09-30
+
 ### Changed
 
 - The server instructions now state that the default SSH login user on Linux
