@@ -84,7 +84,9 @@ const createVmShape = {
   keypairs: z
     .array(z.string())
     .optional()
-    .describe("Names of SSH key pairs to install (from list_ssh_keys)."),
+    .describe(
+      "Names of SSH key pairs to install for the default login user cloud (from list_ssh_keys). Connect with ssh cloud@<public-ip>.",
+    ),
   userdata: z
     .string()
     .optional()
@@ -120,7 +122,9 @@ const resetVmPasswordShape = {
   password: z
     .string()
     .optional()
-    .describe("New root/administrator password. Omit to have one generated and returned."),
+    .describe(
+      "New password for the VM's login user (cloud on Linux images). Omit to have one generated and returned.",
+    ),
 } satisfies Record<keyof AmericancloudApi.ResetPasswordDto, z.ZodTypeAny>;
 
 const powerVmShape = {
@@ -276,7 +280,7 @@ export const computeTools: ToolDef[] = [
     name: "get_vm",
     title: "Get VM",
     description:
-      "Get one virtual machine by ID: status, specs, IP address, network, and image details.",
+      "Get one virtual machine by ID: status, specs, IP address, network, and image details. To connect over SSH, log in at the public IP as the default user cloud, unless the user names a different one.",
     group: "compute",
     sdkRef: "vms.getVms",
     readOnly: true,
@@ -313,7 +317,7 @@ export const computeTools: ToolDef[] = [
     name: "reset_vm_password",
     title: "Reset VM password",
     description:
-      "Reset the root/administrator password of a VM. Provide a password to set it explicitly, or omit it to have one generated and returned in the response.",
+      "Reset the password of a VM's login user (cloud on Linux images). Provide a password to set it explicitly, or omit it to have one generated and returned in the response.",
     group: "compute",
     sdkRef: "vms.resetPasswordVms",
     readOnly: false,
@@ -534,7 +538,7 @@ export const computeTools: ToolDef[] = [
     name: "create_ssh_key",
     title: "Create SSH key",
     description:
-      "Register an SSH key pair. Provide publicKey to register an existing key, or omit it to have a pair generated — the private key is returned once in the response and never stored.",
+      "Register an SSH key pair. Provide publicKey to register an existing key, or omit it to have a pair generated — the private key is returned once in the response and never stored. VMs created with this key accept SSH logins as the default user cloud (ssh -i <private-key-file> cloud@<public-ip>).",
     group: "compute",
     sdkRef: "sshKeys.createSshKeys",
     readOnly: false,

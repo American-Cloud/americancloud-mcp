@@ -28,6 +28,10 @@ const DESTRUCTIVE_PREFIX = "⚠️ DESTRUCTIVE — ";
  * model orients without trial and error: the read-only posture, the
  * discover → cost-estimate → create flow, and the convention that list_* outputs
  * feed create_* inputs. Kept user-facing — it ships in the published package.
+ * The default SSH user is stated here because a model guesses root when no
+ * text says otherwise. A root login with a password fails, because the VM
+ * password belongs to cloud. The text does not forbid root, because a key
+ * login as root works and a user can choose it.
  */
 const SERVER_INSTRUCTIONS = `American Cloud infrastructure management — one tool per API operation across compute, storage, networking, Kubernetes, databases, WordPress, and DNS.
 
@@ -36,6 +40,13 @@ Getting started:
 - Discover before creating: list_* tools (e.g. list_regions, list_images, list_vm_packages) return the labels and IDs that create_* tools require.
 - Preview cost before provisioning: each get_cost_estimate_* takes the same arguments as its create_* tool and charges nothing.
 - Resources often provision asynchronously — poll the matching get_* tool until the status settles.
+
+Connecting to a VM:
+- The default SSH login user on Linux images is cloud: ssh -i <private-key-file> cloud@<public-ip>. Connect as cloud unless the user names a different user, for example root.
+- Install the key when you create the VM, with create_vm's keypairs argument (key names from list_ssh_keys, or a new pair from create_ssh_key).
+- Kubernetes cluster nodes also use the cloud user, with the key from create_kubernetes_cluster's keypair argument. Node SSH is on the cluster's public IP at port 2222 for the first node, 2223 for the next, and so on: ssh -p 2222 cloud@<public-ip>.
+- A VM password (from create_vm or reset_vm_password) belongs to the cloud user.
+- If SSH is unavailable, open a browser console with create_vm_console.
 
 Safety: read-only by default. Create/modify/delete tools appear only when the server is started with --allow-writes; if they're missing and the user wants to make changes, they must restart with that flag. Tools whose description starts with ⚠️ DESTRUCTIVE cause irreversible loss — confirm with the user before calling them.`;
 

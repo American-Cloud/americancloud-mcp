@@ -8,6 +8,21 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+### Changed
+
+- The server instructions now state that the default SSH login user on Linux
+  VMs is `cloud`, and show the command form
+  (`ssh -i <private-key-file> cloud@<public-ip>`). An agent connects as `cloud`
+  unless you name a different user. Before this, an agent tried `root`, was
+  refused, and then tried other default user names. `get_vm`,
+  `create_ssh_key`, the `create_vm` `keypairs` argument, and the Kubernetes
+  cluster `keypair` argument say the same. For a Kubernetes cluster, the
+  instructions also give the node SSH port: 2222 for the first node on the
+  cluster's public IP, and one port higher for each next node.
+- `reset_vm_password` now says that it resets the password of the VM's login
+  user, `cloud` on Linux images. It no longer says "root/administrator". The
+  instructions also say that a VM password belongs to `cloud`.
+
 ## [0.5.0] - 2026-08-26
 
 ### Added
