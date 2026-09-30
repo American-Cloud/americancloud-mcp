@@ -45,7 +45,12 @@ const createKubernetesClusterShape = {
     .string()
     .optional()
     .describe("UUID of an existing network to place the cluster in. Omit to auto-create one."),
-  keypair: z.string().optional().describe("SSH key pair name to install on nodes (from list_ssh_keys)."),
+  keypair: z
+    .string()
+    .optional()
+    .describe(
+      "SSH key pair name to install on nodes for the login user cloud (from list_ssh_keys). Node SSH is on the cluster's public IP at port 2222 and up, one port per node.",
+    ),
 } satisfies Record<keyof AmericancloudApi.CreateKubernetesClusterRequest, z.ZodTypeAny>;
 
 type _CheckCreateK8s =

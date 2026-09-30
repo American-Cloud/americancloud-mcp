@@ -56,6 +56,21 @@ test("handshake + default tool list", async () => {
   await client.close();
 });
 
+test("server instructions name cloud as the default SSH login user", async () => {
+  const { client, connect } = spawnServer();
+  await connect();
+  const instructions = client.getInstructions() ?? "";
+  // A model that sees no SSH user tries root first. Keep the default user in
+  // the instructions.
+  assert.match(instructions, /cloud@<public-ip>/, "instructions show the SSH command form");
+  assert.match(
+    instructions,
+    /default SSH login user on Linux images is cloud/,
+    "instructions name cloud as the default SSH user",
+  );
+  await client.close();
+});
+
 test("read-only by default (no --allow-writes) registers only read tools", async () => {
   const { client, connect } = spawnServer(); // no flags — default posture
   await connect();
