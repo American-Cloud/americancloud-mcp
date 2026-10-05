@@ -89,31 +89,52 @@ const createObjectStorageUnitShape = {
 } satisfies Record<keyof AmericancloudApi.CreateStorageUnitRequestDto, z.ZodTypeAny>;
 
 const listObjectStorageBucketsShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID), from list_object_storage_units."),
+  storageUnitId: z.string().describe("Storage unit identifier, e.g. \"tenant$name\" (the storageUnitId from list_object_storage_units)."),
   ...pagination,
 } satisfies Record<keyof AmericancloudApi.ListBucketsObjectStorageRequest, z.ZodTypeAny>;
 
 const createObjectStorageBucketShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID) to create the bucket in."),
+  storageUnitId: z.string().describe("Storage unit identifier to create the bucket in (the storageUnitId from list_object_storage_units)."),
   name: z.string().min(1).describe("Bucket name (must be unique within the unit)."),
 } satisfies Record<keyof AmericancloudApi.CreateBucketRequestDto, z.ZodTypeAny>;
 
 const getObjectStorageKeysShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID) whose S3 access keys to return."),
+  storageUnitId: z.string().describe("Storage unit identifier whose original S3 key pair to return (the storageUnitId from list_object_storage_units)."),
 } satisfies Record<keyof AmericancloudApi.GetKeysObjectStorageRequest, z.ZodTypeAny>;
 
+const listObjectStorageAccessKeysShape = {
+  storageUnitId: z.string().describe("Storage unit identifier whose S3 access keys to list (the storageUnitId from list_object_storage_units)."),
+  ...pagination,
+} satisfies Record<keyof AmericancloudApi.ListAccessKeysObjectStorageRequest, z.ZodTypeAny>;
+
+const createObjectStorageAccessKeyShape = {
+  storageUnitId: z.string().describe("Storage unit identifier to add the key to (the storageUnitId from list_object_storage_units)."),
+  label: z
+    .string()
+    .min(1)
+    .max(64)
+    .describe(
+      "Label that identifies the key, e.g. the application that uses it. 1-64 characters; starts with a letter or number; letters, numbers, single spaces and . _ - : , / @ # ( ) + & ' only. It cannot be changed later.",
+    ),
+} satisfies Record<keyof AmericancloudApi.CreateAccessKeyRequestDto, z.ZodTypeAny>;
+
+const deleteObjectStorageAccessKeyShape = {
+  storageUnitId: z.string().describe("Storage unit identifier that holds the key (the storageUnitId from list_object_storage_units)."),
+  accessKey: z.string().describe("Access key ID to delete (the accessKey from list_object_storage_access_keys)."),
+} satisfies Record<keyof AmericancloudApi.DeleteAccessKeyObjectStorageRequest, z.ZodTypeAny>;
+
 const setObjectStorageQuotaShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID) to set the quota on."),
+  storageUnitId: z.string().describe("Storage unit identifier to set the quota on (the storageUnitId from list_object_storage_units)."),
   maxSizeGb: z.number().int().optional().describe("Maximum size in gigabytes. Omit when removing the limit."),
   removeLimit: z.boolean().optional().describe("Set true to remove any size limit (unlimited)."),
 } satisfies Record<keyof AmericancloudApi.SetUserQuotaRequestDto, z.ZodTypeAny>;
 
 const deleteObjectStorageUnitShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID) to delete."),
+  storageUnitId: z.string().describe("Storage unit identifier to delete (the storageUnitId from list_object_storage_units)."),
 } satisfies Record<keyof AmericancloudApi.DeleteUnitObjectStorageRequest, z.ZodTypeAny>;
 
 const deleteObjectStorageBucketShape = {
-  storageUnitId: z.string().describe("Storage unit identifier (UUID) containing the bucket."),
+  storageUnitId: z.string().describe("Storage unit identifier containing the bucket (the storageUnitId from list_object_storage_units)."),
   bucketName: z.string().describe("Name of the bucket to delete."),
   purgeObjects: z
     .boolean()
@@ -352,13 +373,50 @@ export const storageTools: ToolDef[] = [
     name: "get_object_storage_keys",
     title: "Get object storage keys",
     description:
-      "Get the S3 access key and secret for an object storage unit, used to connect S3 clients. Treat the returned secret as sensitive.",
+      "Get the original S3 access key and secret of an object storage unit (its oldest key), used to connect S3 clients. To see every key with its label, use list_object_storage_access_keys. Treat the returned secret as sensitive.",
     group: "storage",
     sdkRef: "objectStorage.getKeysObjectStorage",
     readOnly: true,
     idempotent: true,
     inputSchema: getObjectStorageKeysShape,
     run: (client, args) => client.objectStorage.getKeysObjectStorage(args),
+  }),
+  defineTool({
+    name: "list_object_storage_access_keys",
+    title: "List object storage access keys",
+    description:
+      "List every S3 access key of an object storage unit, oldest first, with its secret, label and creation time. All keys work at the same time. The unit's original key has a null label and createdAt. Treat the returned secrets as sensitive.",
+    group: "storage",
+    sdkRef: "objectStorage.listAccessKeysObjectStorage",
+    readOnly: true,
+    idempotent: true,
+    inputSchema: listObjectStorageAccessKeysShape,
+    run: (client, args) => client.objectStorage.listAccessKeysObjectStorage(args),
+  }),
+  defineTool({
+    name: "create_object_storage_access_key",
+    title: "Create object storage access key",
+    description:
+      "Add an S3 access key with a label to an object storage unit and return it with its secret; the existing keys keep working. A unit holds up to 10 keys. If the call answers operation_in_progress, check list_object_storage_access_keys before you retry, so you do not create a second key.",
+    group: "storage",
+    sdkRef: "objectStorage.createAccessKeyObjectStorage",
+    readOnly: false,
+    idempotent: false,
+    inputSchema: createObjectStorageAccessKeyShape,
+    run: (client, args) => client.objectStorage.createAccessKeyObjectStorage(args),
+  }),
+  defineTool({
+    name: "delete_object_storage_access_key",
+    title: "Delete object storage access key",
+    description:
+      "Delete one S3 access key of an object storage unit (from list_object_storage_access_keys). S3 requests signed with that key fail from then on; the other keys keep working. A unit always keeps at least one key: create a new key before you replace the last one.",
+    group: "storage",
+    sdkRef: "objectStorage.deleteAccessKeyObjectStorage",
+    readOnly: false,
+    destructive: true,
+    idempotent: true,
+    inputSchema: deleteObjectStorageAccessKeyShape,
+    run: (client, args) => client.objectStorage.deleteAccessKeyObjectStorage(args),
   }),
   defineTool({
     name: "get_cost_estimate_object_storage",

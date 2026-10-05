@@ -8,6 +8,31 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-05
+
+### Added
+
+- `list_object_storage_access_keys`, `create_object_storage_access_key` and
+  `delete_object_storage_access_key` — manage the S3 access keys of an object
+  storage unit. A unit holds up to 10 keys, every key works at the same time,
+  and a unit always keeps at least one key. Each key has a label that you set
+  when you create it. `delete_object_storage_access_key` is destructive and needs
+  `--allow-writes`, like `create_object_storage_access_key`.
+
+### Changed
+
+- Built against `@americancloud/sdk` 1.5.0 (API platform 1.5.0).
+- `get_object_storage_keys` says that it returns the unit's original key (its
+  oldest key) and points to `list_object_storage_access_keys` for every key.
+- The object storage tools describe `storageUnitId` correctly: it is the
+  `storageUnitId` from `list_object_storage_units`, for example `tenant$name`,
+  not a UUID.
+
+### Security
+
+- Refreshed the transitive dependencies in the lock file, for example
+  `@hono/node-server` 1.19.17.
+
 ## [0.5.1] - 2026-09-30
 
 ### Changed

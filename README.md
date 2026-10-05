@@ -47,7 +47,7 @@ npx @americancloud/mcp --services compute,dns
 | Group | Tools | Covers |
 |---|---|---|
 | `compute` *(default)* | 25 | VMs, packages, images, regions, SSH keys |
-| `storage` *(default)* | 24 | block storage, snapshots, object storage |
+| `storage` *(default)* | 27 | block storage, snapshots, object storage and its access keys |
 | `networking` *(default)* | 57 | isolated/VPC networks, VPC tiers, public IPs, firewall, port forwarding, load balancers, egress, ACLs |
 | `kubernetes` *(default)* | 11 | managed Kubernetes clusters |
 | `databases` | 36 | managed MySQL/PostgreSQL/Redis, backups, infrastructure, offerings |
