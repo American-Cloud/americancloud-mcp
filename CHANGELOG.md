@@ -8,6 +8,43 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-10-10
+
+### Changed
+
+- Built against `@americancloud/sdk` 1.6.0 (API platform 1.6.0).
+- `get_kubernetes_cluster_config` needs a read-write API key. The API now
+  requires manage access for the kubeconfig, because it grants full access to
+  the cluster. The tool stays in the read-only tool set; with a read-only key
+  the API answers 403. The README says so.
+- The API protects the rules that a managed Kubernetes cluster depends on.
+  `delete_firewall_rule`, `delete_port_forwarding_rule`,
+  `delete_load_balancer_rule`, `update_load_balancer_rule`,
+  `assign_vms_to_load_balancer`, `remove_vms_from_load_balancer`,
+  `delete_network_acl_rule` and `replace_network_acl_list` are refused with
+  `kubernetes_managed_rule` when the rule is one the cluster made on its
+  address; `release_public_ip` with `kubernetes_cluster_address` when the IP is
+  the cluster's; `change_source_nat_ip` with `kubernetes_source_nat` on the
+  cluster's network. `scale_kubernetes_cluster` and
+  `upgrade_kubernetes_cluster` are refused with `kubernetes_api_rule_missing`
+  when the cluster's port 6443 rule is already gone. In every case nothing
+  changes, and the message names the cluster.
+- `get_vm` and `get_kubernetes_cluster` find a resource right after
+  `create_vm` or `create_kubernetes_cluster` returns, with the status
+  `CREATING` and the requested spec. Before, the read answered not found for a
+  few seconds.
+- `get_cost_estimate_object_storage` returns `metered`: the price of a GB stored
+  for a month (`rate_per_gb_month`, before and after any discount) and the
+  storage that the monthly minimum covers (`minimum_gb`).
+- `create_object_storage_unit` accepts hyphens and underscores in the name:
+  letters, digits, hyphens and underscores, up to 100 characters, starting and
+  ending with a letter or digit. The names `anonymous` and `RGW` followed by 17
+  digits are reserved. `create_object_storage_bucket` also refuses two dots
+  together, a dot next to a hyphen, and a name in the form of an IP address.
+  Each refusal names the rule.
+- `attach_block_storage_volume` and `detach_block_storage_volume` are refused
+  while the VM starts or stops, with a message that names the state.
+
 ## [0.6.0] - 2026-10-05
 
 ### Added

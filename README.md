@@ -69,7 +69,9 @@ billing**. It's designed to be safe by default:
 - **Use the narrowest key.** For inspection, provision a **`read-only` API key**
   — then resource mutation is impossible regardless of any flag, because the
   key itself can't perform writes. Only use a `read-write` key together with
-  `--allow-writes` when you actually want the assistant to make changes.
+  `--allow-writes` when you actually want the assistant to make changes. One
+  read tool needs a `read-write` key: `get_kubernetes_cluster_config`, because
+  the kubeconfig grants full access to the cluster.
 - **Destructive tools are flagged.** Delete/release/reinstall/revert/cancel
   tools are marked destructive, so MCP clients that support confirmations will
   prompt before running them.

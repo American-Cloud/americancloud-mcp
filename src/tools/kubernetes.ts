@@ -188,7 +188,7 @@ export const kubernetesTools: ToolDef[] = [
     name: "get_kubernetes_cluster_config",
     title: "Get Kubernetes cluster config",
     description:
-      "Get the kubeconfig (YAML) for a cluster, used to connect kubectl and other Kubernetes tooling. Treat it as sensitive — it grants cluster access.",
+      "Get the kubeconfig (YAML) for a cluster, used to connect kubectl and other Kubernetes tooling. Treat it as sensitive — it grants cluster access, so it needs a read-write API key.",
     group: "kubernetes",
     sdkRef: "kubernetes.getClusterConfigKubernetes",
     readOnly: true,
