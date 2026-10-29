@@ -5,9 +5,10 @@
  * - Without real credentials (CI default): handshake + listing + filter
  *   assertions run against dummy keys (the server only touches the API when a
  *   tool is called).
- * - With AMERICANCLOUD_API_CLIENT_ID/SECRET set (and optionally
- *   AMERICANCLOUD_API_URL pointing at staging): also exercises read-only
- *   tool calls against the live API.
+ * - With AMERICANCLOUD_API_CLIENT_ID/SECRET AND AMERICANCLOUD_API_URL set to a
+ *   non-production base URL (for example staging): also exercises read-only
+ *   tool calls against that API. The server defaults to the production API,
+ *   so the live test never runs without an explicit, non-production URL.
  *
  * Run: npm run build && npm test
  */
@@ -18,8 +19,12 @@ import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js"
 import { ALL_TOOLS } from "../src/manifest.js";
 import { GROUPS } from "../src/tooldef.js";
 
+const LIVE_API_URL = process.env.AMERICANCLOUD_API_URL ?? "";
 const HAVE_CREDS = Boolean(
-  process.env.AMERICANCLOUD_API_CLIENT_ID && process.env.AMERICANCLOUD_API_CLIENT_SECRET,
+  process.env.AMERICANCLOUD_API_CLIENT_ID &&
+    process.env.AMERICANCLOUD_API_CLIENT_SECRET &&
+    LIVE_API_URL &&
+    !LIVE_API_URL.includes("api.americancloud.com"),
 );
 
 function spawnServer(extraArgs: string[] = []): { client: Client; connect: () => Promise<void> } {

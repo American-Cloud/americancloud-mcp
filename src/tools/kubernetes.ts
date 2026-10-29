@@ -35,11 +35,24 @@ const deleteKubernetesClusterShape = {
 
 const createKubernetesClusterShape = {
   name: z.string().min(1).describe("Cluster name."),
-  package: z.string().describe("Kubernetes package label (from list_kubernetes_packages)."),
+  package: z
+    .string()
+    .optional()
+    .describe(
+      "Package label for every node (from list_kubernetes_packages). Send it alone for one size, with controlPackage or workerPackage to change one node type, or leave it out when you send both.",
+    ),
+  controlPackage: z
+    .string()
+    .optional()
+    .describe("Package label for the control-plane nodes (from list_kubernetes_packages). Overrides package."),
+  workerPackage: z
+    .string()
+    .optional()
+    .describe("Package label for the worker nodes (from list_kubernetes_packages). Overrides package."),
   region: z.string().describe('Region label, e.g. "us-west-0" (from list_regions).'),
   version: z.string().describe("Kubernetes version (from list_kubernetes_versions)."),
   controlNodes: z.number().int().min(1).describe("Number of control-plane nodes."),
-  workerNodes: z.number().int().min(0).describe("Number of worker nodes."),
+  workerNodes: z.number().int().min(1).describe("Number of worker nodes."),
   description: z.string().optional().describe("Optional description for the cluster."),
   networkId: z
     .string()
@@ -78,10 +91,25 @@ const getKubernetesClusterConfigShape = {
 
 const scaleKubernetesClusterShape = {
   id: clusterId,
-  workerNodes: z.number().int().min(0).optional().describe("Fixed worker-node count (when autoscaling is off)."),
+  workerNodes: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Fixed worker-node count (when autoscaling is off). Leave it out when enabling autoscaling."),
   autoscalingEnabled: z.boolean().optional().describe("Enable or disable worker autoscaling."),
-  minWorkers: z.number().int().min(0).optional().describe("Minimum workers when autoscaling is on."),
-  maxWorkers: z.number().int().min(0).optional().describe("Maximum workers when autoscaling is on."),
+  minWorkers: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Minimum workers when autoscaling is on. Send it with maxWorkers and autoscalingEnabled: true."),
+  maxWorkers: z
+    .number()
+    .int()
+    .min(1)
+    .optional()
+    .describe("Maximum workers when autoscaling is on. Must be greater than minWorkers."),
 } satisfies Record<keyof AmericancloudApi.ScaleKubernetesClusterRequest, z.ZodTypeAny>;
 
 const upgradeKubernetesClusterShape = {
@@ -152,7 +180,7 @@ export const kubernetesTools: ToolDef[] = [
     name: "create_kubernetes_cluster",
     title: "Create Kubernetes cluster",
     description:
-      "Create a managed Kubernetes cluster. Pick package/region/version from the list_kubernetes_* tools; preview cost with get_cost_estimate_kubernetes. Provisions asynchronously — poll get_kubernetes_cluster.",
+      "Create a managed Kubernetes cluster. Pick the package (or a controlPackage and workerPackage pair), region and version from the list_kubernetes_* tools; preview cost with get_cost_estimate_kubernetes. Provisions asynchronously — poll get_kubernetes_cluster, whose nodePool.control and nodePool.worker give each node type's package.",
     group: "kubernetes",
     sdkRef: "kubernetes.createClusterKubernetes",
     readOnly: false,

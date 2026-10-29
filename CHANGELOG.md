@@ -8,6 +8,37 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.8.0] - 2026-10-29
+
+### Added
+
+- `create_kubernetes_cluster` and `get_cost_estimate_kubernetes` take
+  `controlPackage` and `workerPackage`: a package for the control-plane nodes
+  and another for the workers. `package` is now optional.
+- `get_kubernetes_cluster` and `list_kubernetes_clusters` return
+  `nodePool.control` and `nodePool.worker`. The cluster's `package` and
+  `nodePool.cpuCores` / `memoryMb` describe the workers only, and are
+  deprecated.
+
+### Changed
+
+- Built against `@americancloud/sdk` 1.7.2 (API platform 1.7.2).
+- `workerNodes`, `minWorkers` and `maxWorkers` must be at least 1.
+- An expired card on file makes billable create and change requests fail with
+  `payment_method_expired`.
+- The API checks the backup `cronExpression` (for example `0 3 * * *` or
+  `@daily`) and `retentionPeriod` (for example `30d` or `1y6mo`).
+- `zod` 3.25.76 → 4.6.7 and `@modelcontextprotocol/sdk` 1.29.0 → 1.32.1. Tool
+  inputs validate as before; validation messages use new words.
+
+### Security
+
+- `zod` 4.6.7 fixes GHSA-mrhx-c7xc-m3w5 (memory use on a very large array
+  input).
+- The MCP SDK bump and a lock file refresh fix advisories in the SDK's HTTP
+  transport and its dependencies. This server runs over stdio only, so they
+  were not reachable.
+
 ## [0.7.0] - 2026-10-10
 
 ### Changed
