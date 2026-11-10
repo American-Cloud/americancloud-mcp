@@ -13,18 +13,21 @@ Usage: npx @americancloud/mcp [options]
 Options:
   --services <csv|all>  Service groups to enable. Default: ${DEFAULT_GROUPS.join(",")}
                         Available: ${GROUPS.join(", ")} (or "all")
-  --allow-writes        Enable tools that create/modify/delete resources.
+  --allow-writes        Enable tools that create/modify/delete resources, and
+                        the tools that return a secret (keys, passwords,
+                        kubeconfig).
                         OMITTED BY DEFAULT — the server is read-only unless you
-                        pass this. Pair with a read-write API key.
+                        pass this. Pair with a token that has Full access.
   --version             Print version and exit
   --help                Show this help
 
-Environment:
-  AMERICANCLOUD_API_CLIENT_ID      API client ID (required)
-  AMERICANCLOUD_API_CLIENT_SECRET  API client secret (required)
+Environment (set one credential):
+  AMERICANCLOUD_API_TOKEN          API token (amcld_…), the credential to use
+  AMERICANCLOUD_API_CLIENT_ID      Legacy API key: client ID
+  AMERICANCLOUD_API_CLIENT_SECRET  Legacy API key: client secret
   AMERICANCLOUD_API_URL            Optional API base URL override
 
-Create API keys at https://console.americancloud.com/api-keys
+Create API tokens at https://console.americancloud.com/api-tokens
 `;
 
 async function main(): Promise<void> {
@@ -64,10 +67,16 @@ async function main(): Promise<void> {
     services = new Set(requested as Group[]);
   }
 
-  const client = makeClient();
+  const { client, credential } = makeClient();
   // Read-only by default — the server controls billable infrastructure and is
   // driven by an LLM, so mutations require an explicit opt-in.
-  const server = buildServer({ client, services, readOnly: !values["allow-writes"] });
+  const server = buildServer({
+    mode: "stdio",
+    clientSource: { kind: "fixed", client },
+    credential,
+    services,
+    readOnly: !values["allow-writes"],
+  });
   const transport = new StdioServerTransport();
   await server.connect(transport);
   log(`americancloud-mcp v${VERSION} ready on stdio`);

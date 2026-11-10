@@ -8,6 +8,116 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+### Added
+
+- A hosted entry point: MCP over Streamable HTTP with OAuth sign-in, for
+  Claude, Claude Code and other clients that support remote servers. The
+  npm package stays the local stdio server.
+- The local server accepts an API token in `AMERICANCLOUD_API_TOKEN` and
+  sends it as `Authorization: Bearer`. The legacy pair
+  (`AMERICANCLOUD_API_CLIENT_ID` and `AMERICANCLOUD_API_CLIENT_SECRET`) still
+  works. Set one or the other, not both.
+- `get_server_info` reports the kind of credential in use.
+
+### Changed
+
+- Hosted server: the log holds the issuer's description on every token
+  exchange failure, for example the reason the sign-in service refuses a token.
+- The server instructions have a section "Inside a VM". No tool runs a
+  command inside a VM. The text names the three paths: SSH from a client that
+  has a shell, a cloud-init script in `create_vm`'s `userdata`, and a browser
+  console from `create_vm_console`. An assistant without a shell can thus say
+  so at once.
+- The instructions and the `create_vm` description say to set up an SSH key
+  before `create_vm`. A client with a shell registers the host's own public
+  key with `create_ssh_key`, and asks before it runs `ssh-keygen`. A client
+  without a shell asks the user for a public key, and generates a pair only
+  on request, because the private key then stays in the chat. The text also
+  says to open port 22 with `networkAccess`, and that the public IP comes
+  from `list_public_ips_by_isolated_network`, not from `get_vm`. The `get_vm`
+  description says the same.
+- Hosted server: the permission error says that a user whose own role lacks
+  the permission needs an account admin first. Connected apps cannot grant
+  more than the role of the user.
+- Hosted server: a permission refusal reads the grant again only when the
+  cached permissions hold the refused permission. A cache that agrees with
+  the refusal stays, so a model that retries a write tool does not force one
+  token exchange for each try.
+- Hosted server: `get_server_info` says that its permissions can be up to 5
+  minutes old, and that the API decides at call time.
+- Hosted server: the log cuts the JSON-RPC method to 64 characters and writes
+  "unknown" for a tool name that is not in the tool table.
+- Hosted server: `MCP_ISSUER_URL` must use https, except on a loopback host.
+- The stdio `get_server_info` reads `AMERICANCLOUD_API_URL` as the client
+  does: a blank value means the default.
+- `npm test` builds first, so the smoke test runs the current source.
+- The npm package ships the stdio server only: `dist/index.js` and its map.
+  The hosted entry `dist/http.js` is built from source into the hosted image
+  and is not in the package.
+- The server sends each API request one time. The SDK no longer sends a
+  request again after a 408, 429 or 5xx answer. A repeated create request
+  could make a second billable resource. After a failed create, check with
+  the matching `list_*` or `get_*` tool before you try again.
+- `destructiveHint` is `true` on every write tool that changes or removes
+  something that exists, for example `update_*`, `replace_network_acl_list`,
+  `stop_database`, `power_vm`, `detach_block_storage_volume` and
+  `scale_vm`. Only the tools that add something new (most `create_*` tools,
+  `reserve_public_ip`, `attach_block_storage_volume`,
+  `assign_vms_to_load_balancer`, `trigger_database_backup`) keep `false`.
+  `create_dns_record` is `true`, because it replaces the record set of a
+  single-value type. The `⚠️ DESTRUCTIVE` description prefix is unchanged: it
+  still marks only the tools that cause irreversible loss.
+- Hosted server: `get_database_backup_repo` needs the manage permission for
+  databases, because with `include_credentials` its answer holds the S3 keys
+  of the backup repository. A Read-only connection gets a permission error
+  from this tool.
+- Hosted server: a tool call stops after 50 seconds and returns a tool error.
+- The local server registers the five tools that return a secret only with
+  `--allow-writes`: `get_kubernetes_cluster_config`,
+  `get_object_storage_keys`, `list_object_storage_access_keys`,
+  `get_database_connection` and `get_database_backup_repo`. The API needs the
+  manage permission for these tools. The tools stay read-only
+  (`readOnlyHint: true`). The read-only default now has 5 fewer tools.
+
+### Fixed
+
+- Hosted server: when the session behind the user's token is gone (the app
+  was disconnected in Connected apps, a sign-out everywhere, a disabled
+  user), the server answers 401 with the sign-in challenge. Before, it
+  answered "The service is not available now" for the rest of the token
+  life, and each retry ran one more exchange.
+- Hosted server: the default `MCP_MAX_TOKEN_LIFE_S` is 300, equal to the
+  life of a sign-in access token and to the block after a disconnect.
+- Hosted server: only the "no account yet" answer of the API maps to "sign
+  in to the dashboard once". Any other 401 from the API is a configuration
+  fault; the user gets the service error and the detail goes to the log.
+- The smoke test accepts `AMERICANCLOUD_API_TOKEN` for its live pass. Before,
+  it set a dummy key pair as well, and the server refused to start with two
+  credentials.
+- Hosted server: a refused account check now gets a clear answer, not "The
+  service is not available now". A suspended account gets 403 with the API
+  message. Another refused account gets 403 with a fixed message. A user
+  with no account yet gets 403 with "Sign in to the dashboard once". A rate
+  limit gets 429 with `Retry-After`.
+- Hosted server: when the API refuses the connection on a tool call (401, or
+  403 `connected_app_revoked`), the next request checks the connection again.
+- Hosted server: every connection lists every tool. Before, the list held
+  only the tools that the app's permissions allowed, and a client that had
+  connected as Read-only kept that short list after the user chose Full
+  access, because no client asks for `tools/list` again. Now the API checks
+  the permissions on each call, and a refused call returns an error that
+  names the missing permission and Connected apps. A permission change
+  applies to the next call, with no reconnect. `get_server_info` reports
+  the permissions from the last check, up to 5 minutes old.
+
+### Security
+
+- Hosted server: a sign-in token with a life longer than 5 minutes
+  (`MCP_MAX_TOKEN_LIFE_S`, default 300) or with no `iat` is refused with 401.
+- Hosted server: the configuration refuses an issuer URL with a final slash,
+  a resource URL with a path other than `/mcp`, and the example client
+  secret.
+
 ## [0.8.0] - 2026-10-29
 
 ### Added

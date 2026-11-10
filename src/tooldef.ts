@@ -47,8 +47,28 @@ export interface ToolDef<Shape extends ZodRawShape = ZodRawShape> {
   sdkRef: string;
   /** GET-like, no side effects → readOnlyHint. */
   readOnly: boolean;
-  /** Irreversible data/resource loss → destructiveHint + description prefix. */
+  /**
+   * The answer holds a secret: a key, a password or a kubeconfig. The API
+   * needs the ":manage" permission for such a tool. The stdio server thus
+   * registers the tool only with `--allow-writes`, as it does a write tool.
+   * The tool keeps `readOnly: true`, so `readOnlyHint` stays true.
+   * Only a read-only tool can have this flag (test/manifest-rules.ts).
+   */
+  secret?: boolean;
+  /**
+   * Irreversible data/resource loss → the `⚠️ DESTRUCTIVE` description
+   * prefix. It is not the same as `destructiveHint`: see `additive`.
+   */
   destructive?: boolean;
+  /**
+   * The tool only adds: it makes a new resource, rule, session or link, and
+   * it does not change or remove a thing that exists. Only such a write tool
+   * gets `destructiveHint: false`. MCP defines `false` as "only additive
+   * updates", so every other write tool (update, replace, stop, detach,
+   * resize, and so on) gets `destructiveHint: true`. When you are not sure,
+   * do not set this flag. test/manifest-rules.ts holds the name rules.
+   */
+  additive?: boolean;
   /** Same call twice converges to the same state → idempotentHint. */
   idempotent?: boolean;
   inputSchema: Shape;

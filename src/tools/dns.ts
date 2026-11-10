@@ -122,6 +122,7 @@ export const dnsTools: ToolDef[] = [
     group: "dns",
     sdkRef: "dnsZones.createDnsZones",
     readOnly: false,
+    additive: true,
     idempotent: false,
     inputSchema: createDnsZoneShape,
     run: (client, args) => client.dnsZones.createDnsZones(args),

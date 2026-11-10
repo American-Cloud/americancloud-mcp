@@ -6,7 +6,7 @@
  */
 import { strict as assert } from "node:assert";
 import test from "node:test";
-import { AmericancloudApiError } from "@americancloud/sdk";
+import { AmericancloudApiError, AmericancloudApiTimeoutError } from "@americancloud/sdk";
 import { toErrorResult } from "../src/server.js";
 
 const text = (err: unknown) => {
@@ -78,4 +78,16 @@ test("does not throw on shapes the API should never send", () => {
 
 test("a non-API error still returns a readable result", () => {
   assert.match(text(new Error("socket hang up")), /some_tool failed: socket hang up/);
+});
+
+test("a client-side timeout says the operation can have completed", () => {
+  const out = text(new AmericancloudApiTimeoutError("Timeout"));
+  assert.match(out, /^some_tool: The request got no answer in time\./);
+  assert.match(out, /List or get the resource before you try again/);
+});
+
+test("a 504 from the gateway carries the same advice", () => {
+  const out = text(apiError(504, { statusCode: 504, message: "Gateway Time-out" }));
+  assert.match(out, /\(504\): Gateway Time-out/);
+  assert.match(out, /List or get the resource before you try again/);
 });

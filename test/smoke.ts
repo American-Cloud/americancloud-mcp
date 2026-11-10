@@ -5,7 +5,8 @@
  * - Without real credentials (CI default): handshake + listing + filter
  *   assertions run against dummy keys (the server only touches the API when a
  *   tool is called).
- * - With AMERICANCLOUD_API_CLIENT_ID/SECRET AND AMERICANCLOUD_API_URL set to a
+ * - With a credential (AMERICANCLOUD_API_TOKEN, or the legacy
+ *   AMERICANCLOUD_API_CLIENT_ID/SECRET pair) AND AMERICANCLOUD_API_URL set to a
  *   non-production base URL (for example staging): also exercises read-only
  *   tool calls against that API. The server defaults to the production API,
  *   so the live test never runs without an explicit, non-production URL.
@@ -20,12 +21,23 @@ import { ALL_TOOLS } from "../src/manifest.js";
 import { GROUPS } from "../src/tooldef.js";
 
 const LIVE_API_URL = process.env.AMERICANCLOUD_API_URL ?? "";
-const HAVE_CREDS = Boolean(
-  process.env.AMERICANCLOUD_API_CLIENT_ID &&
-    process.env.AMERICANCLOUD_API_CLIENT_SECRET &&
-    LIVE_API_URL &&
-    !LIVE_API_URL.includes("api.americancloud.com"),
+const HAVE_TOKEN = Boolean(process.env.AMERICANCLOUD_API_TOKEN);
+const HAVE_KEY_PAIR = Boolean(
+  process.env.AMERICANCLOUD_API_CLIENT_ID && process.env.AMERICANCLOUD_API_CLIENT_SECRET,
 );
+const HAVE_CREDS = Boolean(
+  (HAVE_TOKEN || HAVE_KEY_PAIR) && LIVE_API_URL && !LIVE_API_URL.includes("api.americancloud.com"),
+);
+
+// The server accepts one credential, not both. Without a real one, a dummy
+// key pair lets the handshake and the listing run; the API is never called.
+const CREDENTIAL_ENV: Record<string, string> = HAVE_TOKEN
+  ? {}
+  : {
+      AMERICANCLOUD_API_CLIENT_ID: process.env.AMERICANCLOUD_API_CLIENT_ID ?? "smoke-dummy-id",
+      AMERICANCLOUD_API_CLIENT_SECRET:
+        process.env.AMERICANCLOUD_API_CLIENT_SECRET ?? "smoke-dummy-secret",
+    };
 
 function spawnServer(extraArgs: string[] = []): { client: Client; connect: () => Promise<void> } {
   const transport = new StdioClientTransport({
@@ -33,9 +45,7 @@ function spawnServer(extraArgs: string[] = []): { client: Client; connect: () =>
     args: ["dist/index.js", ...extraArgs],
     env: {
       ...(process.env as Record<string, string>),
-      AMERICANCLOUD_API_CLIENT_ID: process.env.AMERICANCLOUD_API_CLIENT_ID ?? "smoke-dummy-id",
-      AMERICANCLOUD_API_CLIENT_SECRET:
-        process.env.AMERICANCLOUD_API_CLIENT_SECRET ?? "smoke-dummy-secret",
+      ...CREDENTIAL_ENV,
     },
   });
   const client = new Client({ name: "smoke", version: "0.0.0" });
@@ -82,6 +92,11 @@ test("read-only by default (no --allow-writes) registers only read tools", async
   const { tools } = await client.listTools();
   for (const t of tools) {
     assert.equal(t.annotations?.readOnlyHint, true, `${t.name} must be read-only by default`);
+  }
+  // A tool that returns a secret is read-only, but it needs --allow-writes.
+  const secrets = new Set(ALL_TOOLS.filter((t) => t.secret).map((t) => t.name));
+  for (const t of tools) {
+    assert.equal(secrets.has(t.name), false, `${t.name} returns a secret, so it needs --allow-writes`);
   }
   await client.close();
 });

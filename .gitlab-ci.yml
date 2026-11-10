@@ -1,0 +1,65 @@
+# Builds the hosted MCP server image on a private GitLab project. It does not
+# build or publish the npm package; .github/workflows/release.yml does that on
+# GitHub.
+#
+# A push of any branch builds a staging image. A push of master builds a
+# production image. The tag is the 8-character commit SHA.
+#
+# Rootless buildkit on a Kubernetes runner, with the registry CA from the CI
+# file variable CA_FILE.
+
+variables:
+  BUILDKIT_IMAGE: moby/buildkit:v0.28.0-rootless
+  BUILDKITD_FLAGS: --oci-worker-no-process-sandbox
+
+stages:
+  - build
+
+.build-image:
+  stage: build
+  image:
+    name: $BUILDKIT_IMAGE
+    entrypoint: ['']
+  tags:
+    - k8s-tds
+  before_script:
+    - export IMAGE_TAG="$CI_COMMIT_SHORT_SHA"
+    - export IMAGE_REPOSITORY="${CI_REGISTRY_IMAGE}/${IMAGE_ENV}"
+    - export SSL_CERT_FILE="$CI_PROJECT_DIR/buildkit-ca-bundle.crt"
+    - |
+      if [ -f /etc/ssl/certs/ca-certificates.crt ]; then
+        cp /etc/ssl/certs/ca-certificates.crt "$SSL_CERT_FILE"
+      else
+        : > "$SSL_CERT_FILE"
+      fi
+    - cat "$CA_FILE" >> "$SSL_CERT_FILE"
+    - export DOCKER_CONFIG="$HOME/.docker"
+    - mkdir -p "$DOCKER_CONFIG"
+    - echo "{\"auths\":{\"$CI_REGISTRY\":{\"username\":\"$CI_REGISTRY_USER\",\"password\":\"$CI_REGISTRY_PASSWORD\"}}}" > "$DOCKER_CONFIG/config.json"
+  script:
+    - |
+      buildctl-daemonless.sh build \
+        --frontend dockerfile.v0 \
+        --local context="$CI_PROJECT_DIR" \
+        --local dockerfile="$CI_PROJECT_DIR" \
+        --opt platform=linux/amd64 \
+        --opt build-arg:MCP_BUILD_SHA="${IMAGE_TAG}" \
+        --import-cache type=registry,ref=${IMAGE_REPOSITORY}:latest \
+        --export-cache type=inline \
+        --output type=image,\"name=${IMAGE_REPOSITORY}:${IMAGE_TAG},${IMAGE_REPOSITORY}:latest\",push=true
+    - echo "image ${IMAGE_REPOSITORY}:${IMAGE_TAG}"
+    - echo "deploy with ./rollout.sh mcp ${IMAGE_TAG}"
+
+build-staging:
+  extends: .build-image
+  variables:
+    IMAGE_ENV: staging
+  rules:
+    - if: $CI_COMMIT_BRANCH && $CI_COMMIT_BRANCH != "master"
+
+build-production:
+  extends: .build-image
+  variables:
+    IMAGE_ENV: production
+  rules:
+    - if: $CI_COMMIT_BRANCH == "master"
