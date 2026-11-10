@@ -1,7 +1,7 @@
 {
   "name": "@americancloud/mcp",
   "mcpName": "com.americancloud/mcp",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "description": "Model Context Protocol server for managing American Cloud infrastructure from Claude, Cursor, and other MCP clients.",
   "license": "Apache-2.0",
   "type": "module",
