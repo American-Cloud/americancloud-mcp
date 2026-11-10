@@ -60,7 +60,7 @@ async function listTools(opts: ServerOptions): Promise<Tool[]> {
 }
 
 test("every registered tool states readOnlyHint, and destructiveHint when it writes", async () => {
-  const client = new AmericancloudApiClient({ apiKey: "rules-dummy", apiClientSecret: "rules-dummy" });
+  const client = new AmericancloudApiClient({ token: "rules-dummy" });
   const builds: ServerOptions[] = [
     {
       mode: "stdio",
@@ -89,7 +89,7 @@ test("every registered tool states readOnlyHint, and destructiveHint when it wri
 });
 
 test("stdio: a secret tool registers only with --allow-writes, and keeps readOnlyHint true", async () => {
-  const client = new AmericancloudApiClient({ apiKey: "rules-dummy", apiClientSecret: "rules-dummy" });
+  const client = new AmericancloudApiClient({ token: "rules-dummy" });
   const base = {
     mode: "stdio",
     clientSource: { kind: "fixed", client },
@@ -147,7 +147,7 @@ const CHANGING_PREFIXES = [
 const ADDITIVE_PREFIXES = ["create_", "reserve_", "assign_", "attach_", "trigger_"];
 
 test("destructiveHint is true for each write tool that is not additive, and the names agree", async () => {
-  const client = new AmericancloudApiClient({ apiKey: "rules-dummy", apiClientSecret: "rules-dummy" });
+  const client = new AmericancloudApiClient({ token: "rules-dummy" });
   const tools = await listTools({
     mode: "stdio",
     clientSource: { kind: "fixed", client },

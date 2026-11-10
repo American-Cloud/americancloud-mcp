@@ -8,6 +8,14 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+### Changed
+
+- `@americancloud/sdk` 1.7.2 → 1.8.0. The 1.8.0 SDK authenticates with an
+  API token and has no option for the legacy key pair, so the server now sets
+  the two `X-API-Client` headers itself when `AMERICANCLOUD_API_CLIENT_ID` and
+  `AMERICANCLOUD_API_CLIENT_SECRET` are set. Both credentials work as before,
+  and the server still refuses to start when both are set. No tool changes.
+
 ## [0.9.0] - 2026-11-10
 
 ### Added

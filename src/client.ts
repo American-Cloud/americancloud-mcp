@@ -57,13 +57,10 @@ export function makeClient(
     );
   }
   return {
-    client: new AmericancloudApiClient({
+    client: makeHeaderClient({
       ...(baseUrl ? { baseUrl } : {}),
+      headers: { "X-API-Client-ID": apiKey, "X-API-Client-Secret": apiClientSecret },
       ...(fetchImpl ? { fetch: fetchImpl } : {}),
-      apiKey,
-      apiClientSecret,
-      // See MAX_RETRIES: the SDK must not send a write two times.
-      maxRetries: MAX_RETRIES,
     }),
     credential: "legacy-api-key",
   };
@@ -81,17 +78,8 @@ export const MAX_RETRIES = 0;
 
 /**
  * Make an SDK client that sends a bearer token as its only credential. The
- * local token path and the hosted server both use this function.
- *
- * - `auth: false` replaces the API key provider with a no-op provider, so the
- *   SDK sends no `X-API-Client-ID`.
- * - The SDK adds `X-API-Client-Secret` only when `apiClientSecret` has a
- *   value. This function gives no value.
- *
- * The SDK options type marks `apiKey` and `apiClientSecret` as required, also
- * when `auth` is false. The type assertion below removes only those two
- * fields. `headers` holds more headers, for example `X-Delegated-Client`.
- * `timeoutInSeconds` replaces the SDK default of 60 s.
+ * local token path and the hosted server both use this function. `headers`
+ * holds more headers, for example `X-Delegated-Client`.
  */
 export function makeBearerClient(opts: {
   baseUrl?: string;
@@ -100,16 +88,34 @@ export function makeBearerClient(opts: {
   fetch?: typeof fetch;
   timeoutInSeconds?: number;
 }): AmericancloudApiClient {
-  const options: Omit<AmericancloudApiClient.Options, "apiKey" | "apiClientSecret"> = {
+  const { token, headers, ...rest } = opts;
+  return makeHeaderClient({ ...rest, headers: { ...headers, Authorization: `Bearer ${token}` } });
+}
+
+/**
+ * Make an SDK client that sends exactly the given headers as its credential.
+ *
+ * `auth: false` replaces the SDK token provider with a no-op provider, so the
+ * SDK reads no `AMERICANCLOUD_API_TOKEN` and adds no `Authorization` header of
+ * its own. The server sets the credential header itself: a bearer token, or
+ * the legacy `X-API-Client-ID` and `X-API-Client-Secret` pair.
+ * `timeoutInSeconds` replaces the SDK default of 60 s.
+ */
+function makeHeaderClient(opts: {
+  baseUrl?: string;
+  headers: Record<string, string>;
+  fetch?: typeof fetch;
+  timeoutInSeconds?: number;
+}): AmericancloudApiClient {
+  return new AmericancloudApiClient({
     ...(opts.baseUrl ? { baseUrl: opts.baseUrl } : {}),
     auth: false,
-    headers: { ...opts.headers, Authorization: `Bearer ${opts.token}` },
+    headers: opts.headers,
     // See MAX_RETRIES: the SDK must not send a write two times.
     maxRetries: MAX_RETRIES,
     ...(opts.timeoutInSeconds !== undefined ? { timeoutInSeconds: opts.timeoutInSeconds } : {}),
     ...(opts.fetch ? { fetch: opts.fetch } : {}),
-  };
-  return new AmericancloudApiClient(options as AmericancloudApiClient.Options);
+  });
 }
 
 /** The trimmed value of the variable, or undefined when it is unset or blank. */

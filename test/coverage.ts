@@ -26,10 +26,7 @@ function publicMethodsOf(obj: object): string[] {
 }
 
 test("every covered SDK method is a tool or NOT_EXPOSED", () => {
-  const client = new AmericancloudApiClient({
-    apiKey: "coverage-dummy",
-    apiClientSecret: "coverage-dummy",
-  });
+  const client = new AmericancloudApiClient({ token: "coverage-dummy" });
 
   const toolRefs = new Set(ALL_TOOLS.map((t) => t.sdkRef));
   const notExposedRefs = new Set(Object.keys(NOT_EXPOSED));

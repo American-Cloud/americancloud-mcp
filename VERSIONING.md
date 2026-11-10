@@ -10,7 +10,8 @@ pins one `@americancloud/sdk` version in `package.json`, and SDK versions are
 lockstep with the API platform version — so the pin transitively states exactly
 which API surface this server was built and tested against:
 
-> `@americancloud/mcp 0.9.0+` ↔ `@americancloud/sdk 1.7.2` ↔ API platform `1.8.0` (API `v1`; the hosted server calls `GET /v1/whoami` itself, so the SDK pin stays on 1.7.2 until the 1.8.0 SDKs ship)
+> `@americancloud/mcp 0.9.1+` ↔ `@americancloud/sdk 1.8.0` ↔ API platform `1.8.0` (API `v1`)
+> `@americancloud/mcp 0.9.0` ↔ `@americancloud/sdk 1.7.2` ↔ API platform `1.8.0` (the hosted server calls `GET /v1/whoami` itself, so 0.9.0 shipped on the 1.7.2 SDK)
 
 Rules:
 

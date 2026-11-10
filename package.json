@@ -29,7 +29,7 @@
     "start:http": "node dist/http.js"
   },
   "dependencies": {
-    "@americancloud/sdk": "1.7.2",
+    "@americancloud/sdk": "1.8.0",
     "@modelcontextprotocol/sdk": "1.32.1",
     "jose": "6.2.14",
     "zod": "4.6.7"
