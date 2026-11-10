@@ -1,15 +1,24 @@
 # American Cloud MCP Server
 
 Manage [American Cloud](https://americancloud.com) infrastructure from Claude,
-Cursor, and any other [MCP](https://modelcontextprotocol.io) client.
+ChatGPT, Grok, Cursor, Codex, and any other [MCP](https://modelcontextprotocol.io)
+client: 179 tools across compute, storage, networking, Kubernetes, databases,
+WordPress, and DNS.
 
-Runs **locally on your machine** over stdio — your API token never leaves your
-environment, and no hosted middleman sits between your AI assistant and your
-cloud. Prefer a sign-in with no install? Use the hosted server at
-`https://mcp.americancloud.com/mcp`: see the
-[guides](https://americancloud.com/docs/mcp/overview).
+There are two ways to connect:
 
-![Claude Code auditing American Cloud infrastructure over the MCP server with a read-only key](https://raw.githubusercontent.com/American-Cloud/americancloud-mcp/master/.demo/mcp-audit.gif)
+| | Hosted server | Local server (this package) |
+|---|---|---|
+| **Address** | `https://mcp.americancloud.com/mcp` | `npx @americancloud/mcp` |
+| **Sign in** | Your American Cloud account, through the client's connector or MCP settings. No install, no token. | An API token in the client configuration. Runs on your machine over stdio. |
+| **Permissions** | Set per app in **Connected apps** in the dashboard: **Read-only**, **Full access**, or **Custom**. Change them at any time; the app picks up the change on its next request. | The token's preset, plus the `--allow-writes` flag. |
+| **Best for** | Claude on the web, Claude Desktop, Claude Code, ChatGPT, Grok, Cursor, Codex | Windsurf, VS Code, other stdio clients, scripts and CI |
+
+The hosted server needs no setup beyond a sign-in: follow the guide for your
+client under [Guides](#guides). The rest of this README covers the local
+server.
+
+![Claude Code auditing American Cloud infrastructure over the MCP server with a read-only token](https://raw.githubusercontent.com/American-Cloud/americancloud-mcp/master/.demo/mcp-audit.gif)
 
 ## Quick start
 
@@ -31,8 +40,10 @@ Add to your MCP client configuration (Claude Desktop, Claude Code, Cursor, …):
 
 Create and manage API tokens at
 **[console.americancloud.com/api-tokens](https://console.americancloud.com/api-tokens)**.
-A legacy API key (client ID and secret) still works: set
-`AMERICANCLOUD_API_CLIENT_ID` and `AMERICANCLOUD_API_CLIENT_SECRET` instead of the token.
+A token has the same presets as a connected app: **Read-only**, **Full
+access**, or **Custom**. A legacy API key (client ID and secret) still works:
+set `AMERICANCLOUD_API_CLIENT_ID` and `AMERICANCLOUD_API_CLIENT_SECRET` instead
+of the token.
 
 **The server is read-only by default** — see [Safety](#safety) before enabling
 resource management.
@@ -134,8 +145,8 @@ instructions, so it says so instead of guessing.
 
 Full documentation on the American Cloud docs site:
 
-- [MCP server overview](https://americancloud.com/docs/mcp/overview) — setup, safety, and service groups
-- Client setup: [Claude Code](https://americancloud.com/docs/mcp/claude-code) · [Claude.ai and Claude Desktop](https://americancloud.com/docs/mcp/claude-desktop) · [ChatGPT](https://americancloud.com/docs/mcp/chatgpt) · [Grok](https://americancloud.com/docs/mcp/grok) · [Cursor](https://americancloud.com/docs/mcp/cursor) · [Codex](https://americancloud.com/docs/mcp/codex) · [other clients](https://americancloud.com/docs/mcp/other-clients)
+- [MCP server overview](https://americancloud.com/docs/mcp/overview) — hosted and local servers, permissions, safety, and service groups
+- Client setup, hosted and local: [Claude Code](https://americancloud.com/docs/mcp/claude-code) · [Claude.ai and Claude Desktop](https://americancloud.com/docs/mcp/claude-desktop) · [ChatGPT](https://americancloud.com/docs/mcp/chatgpt) · [Grok](https://americancloud.com/docs/mcp/grok) · [Cursor](https://americancloud.com/docs/mcp/cursor) · [Codex](https://americancloud.com/docs/mcp/codex) · [other clients](https://americancloud.com/docs/mcp/other-clients)
 - [Things to try](https://americancloud.com/docs/mcp/use-cases) — prompt ideas across compute, storage, networking, and DNS
 - [Deploy with AI](https://americancloud.com/docs/deploy-with-ai/overview) — migration playbooks and deployment recipes built on this server
 
