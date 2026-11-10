@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-11-10
+
 ### Changed
 
 - `@americancloud/sdk` 1.7.2 → 1.8.0. The 1.8.0 SDK authenticates with an
