@@ -76,6 +76,7 @@ test("every registered tool states readOnlyHint, and destructiveHint when it wri
     assert.equal(tools.length, ALL_TOOLS.length + 1, `${opts.mode}: all tools and get_server_info`);
     for (const t of tools) {
       assert.ok(t.title, `${opts.mode}: ${t.name} has a title`);
+      assert.equal(t.annotations?.title, t.title, `${opts.mode}: ${t.name} annotations.title`);
       assert.equal(typeof t.annotations?.readOnlyHint, "boolean", `${opts.mode}: ${t.name} readOnlyHint`);
       if (t.annotations?.readOnlyHint === false) {
         assert.equal(
@@ -86,6 +87,33 @@ test("every registered tool states readOnlyHint, and destructiveHint when it wri
       }
     }
   }
+});
+
+/**
+ * A directory reads the input schema of each tool and refuses a parameter
+ * that has no type. `z.any()` and `z.unknown()` give such a parameter.
+ */
+test("every parameter of every registered tool states a type", async () => {
+  const tools = await listTools({ mode: "hosted", clientSource: { kind: "request" } });
+  const untyped: string[] = [];
+  const visit = (schema: unknown, path: string): void => {
+    if (typeof schema !== "object" || schema === null) return;
+    const s = schema as Record<string, unknown>;
+    const typed =
+      "type" in s || "enum" in s || "const" in s || "$ref" in s || "anyOf" in s || "oneOf" in s || "allOf" in s;
+    if (!typed) untyped.push(path);
+    const props = s.properties as Record<string, unknown> | undefined;
+    for (const [k, v] of Object.entries(props ?? {})) visit(v, `${path}.${k}`);
+    if (s.items) visit(s.items, `${path}[]`);
+    for (const key of ["anyOf", "oneOf", "allOf"]) {
+      for (const [i, v] of ((s[key] as unknown[]) ?? []).entries()) visit(v, `${path}<${key}${i}>`);
+    }
+  };
+  for (const t of tools) {
+    const props = (t.inputSchema.properties ?? {}) as Record<string, unknown>;
+    for (const [k, v] of Object.entries(props)) visit(v, `${t.name}.${k}`);
+  }
+  assert.deepEqual(untyped, [], "parameters with no type");
 });
 
 test("stdio: a secret tool registers only with --allow-writes, and keeps readOnlyHint true", async () => {

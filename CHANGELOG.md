@@ -8,6 +8,18 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+### Changed
+
+- Each tool now states its title in `annotations.title` also. The top-level
+  `title` stays. Some clients and directories read the title from the
+  annotations only.
+- `create_database`: the `networkConfig` parameter has a typed schema
+  (`networkType`, `networkId`, `vpcId`, `zoneName`). The schema had no type
+  before. The accepted values are the same.
+- `create_database_backup_repo` and `update_database_backup_repo`: the
+  descriptions say which stores the repository accepts and link to the API
+  reference.
+
 ## [0.9.1] - 2026-11-10
 
 ### Changed

@@ -36,12 +36,23 @@ const createDatabaseShape = {
     .enum(["single-node", "data-redundancy"])
     .describe("single-node (one instance) or data-redundancy (replicated)."),
   storageGb: z.number().int().optional().describe("Storage size in gigabytes."),
+  // One flat object, not a union, so that the published schema states
+  // `type: object`. A client that reads the schema needs a type for each
+  // parameter. The refine keeps the rule of the union: a VPC needs vpcId.
   networkConfig: z
-    .any()
+    .object({
+      networkType: z.enum(["isolated", "vpc"]).describe("isolated (an isolated network) or vpc (a tier of a VPC)."),
+      networkId: z
+        .string()
+        .describe("ID of the isolated network, or of the VPC tier, that the cluster attaches to."),
+      vpcId: z.string().optional().describe("VPC ID. Required when networkType is vpc."),
+      zoneName: z.string().optional().describe("Zone name override for the cluster."),
+    })
+    .refine((v) => v.networkType !== "vpc" || Boolean(v.vpcId), {
+      message: "vpcId is required when networkType is vpc",
+    })
     .optional()
-    .describe(
-      "Advanced network placement (isolated or VPC) with a networkType discriminator. Omit to use defaults.",
-    ),
+    .describe("Advanced network placement, in an isolated network or a VPC tier. Omit to use defaults."),
   restore: z
     .object({
       sourceClusterId: z.string().describe("Cluster ID to restore from."),
@@ -51,7 +62,15 @@ const createDatabaseShape = {
     .optional()
     .describe("Optionally create the cluster by restoring from an existing backup."),
 } satisfies Record<keyof CreateDatabaseClusterDto, z.ZodTypeAny>;
-type _CkCreateDb = z.infer<z.ZodObject<typeof createDatabaseShape>> extends CreateDatabaseClusterDto ? true : never;
+// networkConfig is flat in the schema and a union in the SDK, so the check
+// leaves it out. The tool casts it at the call.
+type _CkCreateDb =
+  Omit<z.infer<z.ZodObject<typeof createDatabaseShape>>, "networkConfig"> extends Omit<
+    CreateDatabaseClusterDto,
+    "networkConfig"
+  >
+    ? true
+    : never;
 const _ckCreateDb: _CkCreateDb = true;
 void _ckCreateDb;
 
@@ -244,7 +263,7 @@ const getDatabaseOperationStatusShape = {
 export const databasesTools: ToolDef[] = [
   // ── databases ──
   defineTool({ name: "list_databases", title: "List databases", description: "List managed database clusters (MySQL, PostgreSQL, Redis) in your account.", group: "databases", sdkRef: "databases.listDatabases", readOnly: true, idempotent: true, inputSchema: listDatabasesShape, run: (c, a) => c.databases.listDatabases(a) }),
-  defineTool({ name: "create_database", title: "Create database", description: "Create a managed database cluster. Pick offering/region from list_database_offerings and list_database_regions; preview cost with get_cost_estimate_database. Optionally restore from a backup.", group: "databases", sdkRef: "databases.createDatabases", readOnly: false, additive: true, idempotent: false, inputSchema: createDatabaseShape, run: (c, a) => c.databases.createDatabases(a) }),
+  defineTool({ name: "create_database", title: "Create database", description: "Create a managed database cluster. Pick offering/region from list_database_offerings and list_database_regions; preview cost with get_cost_estimate_database. Optionally restore from a backup.", group: "databases", sdkRef: "databases.createDatabases", readOnly: false, additive: true, idempotent: false, inputSchema: createDatabaseShape, run: (c, a) => c.databases.createDatabases({ ...a, networkConfig: a.networkConfig as CreateDatabaseClusterDto["networkConfig"] }) }),
   defineTool({ name: "get_cost_estimate_database", title: "Get database cost estimate", description: "Preview the price of a managed database configuration (or a resize) without applying it.", group: "databases", sdkRef: "databases.getCostEstimateDatabases", readOnly: true, idempotent: true, inputSchema: getCostEstimateDatabaseShape, run: (c, a) => c.databases.getCostEstimateDatabases(a) }),
   defineTool({ name: "get_database", title: "Get database", description: "Get one managed database cluster by ID: engine, tier, storage, and configuration.", group: "databases", sdkRef: "databases.getDatabases", readOnly: true, idempotent: true, inputSchema: getDatabaseShape, run: (c, a) => c.databases.getDatabases(a) }),
   defineTool({ name: "delete_database", title: "Delete database", description: "Permanently delete a managed database cluster and its data. Cannot be undone.", group: "databases", sdkRef: "databases.deleteDatabases", readOnly: false, destructive: true, idempotent: true, inputSchema: deleteDatabaseShape, run: (c, a) => c.databases.deleteDatabases(a) }),
@@ -275,8 +294,8 @@ export const databasesTools: ToolDef[] = [
   defineTool({ name: "list_database_infrastructure", title: "List database infrastructure", description: "List database infrastructure (networking/backup configuration) across your managed databases.", group: "databases", sdkRef: "databaseInfrastructure.listDatabaseInfrastructure", readOnly: true, idempotent: true, inputSchema: listDatabaseInfrastructureShape, run: (c, a) => c.databaseInfrastructure.listDatabaseInfrastructure(a) }),
   defineTool({ name: "get_database_infrastructure", title: "Get database infrastructure", description: "Get the infrastructure configuration for a specific database user cluster.", group: "databases", sdkRef: "databaseInfrastructure.getDatabaseInfrastructure", readOnly: true, idempotent: true, inputSchema: getDatabaseInfrastructureShape, run: (c, a) => c.databaseInfrastructure.getDatabaseInfrastructure(a) }),
   defineTool({ name: "list_database_backup_repos", title: "List database backup repos", description: "List the S3 backup repositories configured for a database user cluster.", group: "databases", sdkRef: "databaseInfrastructure.listBackupReposDatabaseInfrastructure", readOnly: true, idempotent: true, inputSchema: listDatabaseBackupReposShape, run: (c, a) => c.databaseInfrastructure.listBackupReposDatabaseInfrastructure(a) }),
-  defineTool({ name: "create_database_backup_repo", title: "Create database backup repo", description: "Configure an S3-compatible backup repository for a database user cluster.", group: "databases", sdkRef: "databaseInfrastructure.createBackupRepoDatabaseInfrastructure", readOnly: false, idempotent: false, inputSchema: createDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.createBackupRepoDatabaseInfrastructure(a) }),
-  defineTool({ name: "update_database_backup_repo", title: "Update database backup repo", description: "Update an existing S3 backup repository's settings/credentials.", group: "databases", sdkRef: "databaseInfrastructure.updateBackupRepoDatabaseInfrastructure", readOnly: false, idempotent: true, inputSchema: updateDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.updateBackupRepoDatabaseInfrastructure(a) }),
+  defineTool({ name: "create_database_backup_repo", title: "Create database backup repo", description: "Configure an S3-compatible backup repository for a database user cluster. The bucket can be American Cloud object storage or another S3-compatible store. Guide: https://americancloud.com/docs/api.", group: "databases", sdkRef: "databaseInfrastructure.createBackupRepoDatabaseInfrastructure", readOnly: false, idempotent: false, inputSchema: createDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.createBackupRepoDatabaseInfrastructure(a) }),
+  defineTool({ name: "update_database_backup_repo", title: "Update database backup repo", description: "Update the settings or the credentials of an S3-compatible backup repository. Guide: https://americancloud.com/docs/api.", group: "databases", sdkRef: "databaseInfrastructure.updateBackupRepoDatabaseInfrastructure", readOnly: false, idempotent: true, inputSchema: updateDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.updateBackupRepoDatabaseInfrastructure(a) }),
   defineTool({ name: "get_database_backup_repo", title: "Get database backup repo", description: "Get a backup repository's configuration. With include_credentials set, the response includes the repository's S3 access keys — treat those as sensitive.", group: "databases", sdkRef: "databaseInfrastructure.getBackupRepoDatabaseInfrastructure", readOnly: true, secret: true, idempotent: true, inputSchema: getDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.getBackupRepoDatabaseInfrastructure(a) }),
   defineTool({ name: "delete_database_backup_repo", title: "Delete database backup repo", description: "Delete a backup repository. With mode=destroy, stored backups are deleted too. A repository that a cluster still uses is refused — move that cluster to another repository with set_active_database_backup_repo first. Cannot be undone.", group: "databases", sdkRef: "databaseInfrastructure.deleteBackupRepoDatabaseInfrastructure", readOnly: false, destructive: true, idempotent: true, inputSchema: deleteDatabaseBackupRepoShape, run: (c, a) => c.databaseInfrastructure.deleteBackupRepoDatabaseInfrastructure(a) }),
 

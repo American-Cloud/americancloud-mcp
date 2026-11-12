@@ -223,6 +223,7 @@ function registerServerInfo(
         "Describe this American Cloud MCP server: version, pinned SDK version, API endpoint, the kind of credential in use, enabled service groups, and whether it is running in read-only mode. Useful to confirm configuration before managing resources.",
       inputSchema: {},
       annotations: {
+        title: "Get server info",
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
@@ -255,6 +256,7 @@ function registerHostedServerInfo(server: McpServer, opts: { toolCount: number }
         "Describe this American Cloud MCP server: version, pinned SDK version, the connected app, and the permissions that this connection has. The permissions are from the last check, up to 5 minutes old. The API decides at call time, so a call can succeed after a permission change before this answer shows it.",
       inputSchema: {},
       annotations: {
+        title: "Get server info",
         readOnlyHint: true,
         destructiveHint: false,
         idempotentHint: true,
@@ -316,6 +318,9 @@ function registerOne(
       description,
       inputSchema: tool.inputSchema,
       annotations: {
+        // The same text as the top-level title. Some clients and directories
+        // read the title from the annotations only.
+        title: tool.title,
         readOnlyHint: tool.readOnly,
         // MCP defines destructiveHint false as "only additive updates". A
         // write that changes or removes a thing that exists is true, also
