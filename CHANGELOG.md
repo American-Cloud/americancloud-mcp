@@ -8,6 +8,8 @@ See [`VERSIONING.md`](./VERSIONING.md) for how MCP versions relate to the SDK an
 
 ## [Unreleased]
 
+## [0.9.2] - 2026-11-12
+
 ### Changed
 
 - Each tool now states its title in `annotations.title` also. The top-level
